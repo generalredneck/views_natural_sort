@@ -49,12 +49,12 @@ function views_natural_sort_rebuild_index(&$context) {
   if (!isset($sandbox['max'])) {
     $sandbox['progress'] = 0;
     $sandbox['max'] = db_result(db_query('SELECT MAX(nid) FROM {node}'));
-    $sandbox['total'] = db_result(db_query('SELECT COUNT(nid) FROM {node} WHERE nid < %d', $sandbox['max']));
+    $sandbox['total'] = db_result(db_query('SELECT COUNT(nid) FROM {node} WHERE nid <= %d', $sandbox['max']));
     $sandbox['current'] = 0;
     $context['results']['nodes'] = 0;
   }
 
-  $results = db_query_range('SELECT nid, title FROM {node} WHERE nid > %d AND nid < %d', $sandbox['current'], $sandbox['max'], 0, 10);
+  $results = db_query_range('SELECT nid, title FROM {node} WHERE nid > %d AND nid <= %d', $sandbox['current'], $sandbox['max'], 0, 10);
 
   $title = '';
   while($row = db_fetch_object($results)) {
