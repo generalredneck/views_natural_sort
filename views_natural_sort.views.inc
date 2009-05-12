@@ -31,7 +31,15 @@ function views_natural_sort_views_data() {
   $data['views_natural_sort']['content'] = array(
     'title' => 'Title - Natural',
     'group' => t('Node'),
-    'help' => t('Sort title using a natural sort.'),
+    'help' => t('The title of a node filtered for natural sorting.'),
+    // Normally you wouldn't want a field or argument on this but its available for grouping.
+    'field' => array(
+      'handler' => 'views_handler_field_node',
+      'click sortable' => TRUE,
+     ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_string',
+    ),
     'sort' => array(
       'handler' => 'views_handler_sort',
     ),
