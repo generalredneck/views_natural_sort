@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Provides a views filter that sorts titles by a more natural manner by

@@ -1,5 +1,4 @@
 <?php
-// $Id$
 /**
  * @file
  * Callbacks for managing Views Natural Sort.
