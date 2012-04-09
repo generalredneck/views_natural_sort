@@ -50,18 +50,21 @@ function views_natural_sort_views_api() {
 }
 
 /**
- * Implementation of hook_nodeapi().
+ * Implements hook_node_insert().
  *
  * This keeps our natural sort index up to date.
  */
-function views_natural_sort_nodeapi(&$node, $op) {
-  //
-  switch ($op) {
-    case 'update':
-    case 'insert':
-      _views_natural_sort_store_node($node);
-      break;
-  }
+function views_natural_sort_node_insert($node) {
+  _views_natural_sort_store_node($node);
+}
+
+/**
+ * Implementation of hook_node_update().
+ *
+ * This keeps our natural sort index up to date.
+ */
+function views_natural_sort_node_update($node) {
+  _views_natural_sort_store_node($node);
 }
 
 /**
@@ -69,19 +72,22 @@ function views_natural_sort_nodeapi(&$node, $op) {
  *
  * @param $node
  * A drupal node object containing at least a nid and title.
+ * @return int
+ * MergeQuery::STATUS_UPDATE or MergeQuery::STATUS_INSERT
  */
 function _views_natural_sort_store_node($node) {
-  $record = new stdClass();
-  $record->nid = $node->nid;
-  $record->field = 'title';
-  $record->content = _views_natural_sort_filter_content($node->title);
   // Try to update. On fail, try inserting.
-  $return = drupal_write_record('views_natural_sort', $record, array('nid', 'field'));
-  if (!db_affected_rows()) {
-    $return = drupal_write_record('views_natural_sort', $record);
-  }
-
-  return $return;
+  return db_merge('views_natural_sort')
+    ->key( array(
+      'nid' => $node->nid,
+      'field'=> 'title'
+	))
+	->fields( array(
+      'nid' => $node->nid,
+      'field' => 'title',
+      'content' => _views_natural_sort_filter_content($node->title)
+    ))
+	->execute();
 }
 
 /**
