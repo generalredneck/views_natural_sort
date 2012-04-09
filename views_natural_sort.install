@@ -46,12 +46,10 @@ function views_natural_sort_schema() {
  * Implementation of hook_install().
  */
 function views_natural_sort_install() {
-  drupal_install_schema('views_natural_sort');
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function views_natural_sort_uninstall() {
-  drupal_uninstall_schema('views_natural_sort');
 }
