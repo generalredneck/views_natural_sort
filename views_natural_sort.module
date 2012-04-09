@@ -86,7 +86,7 @@ function _views_natural_sort_store_node($node) {
   return db_merge('views_natural_sort')
     ->key(array(
       'nid' => $node->nid,
-      'field'=> 'title'
+      'field' => 'title'
     ))
     ->fields(array(
       'nid' => $node->nid,
