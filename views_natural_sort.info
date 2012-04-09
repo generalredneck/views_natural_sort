@@ -2,4 +2,4 @@ name = Views Natural Sort
 description = Sort results naturaly on a text field skipping articles like "the" and "a." 
 dependencies[] = views
 package = Views
-core = 6.x
+core = 7.x
