@@ -1,0 +1,3 @@
+===== 6.x-1.1 ======
+
+ * [#558668] Applied patch contributed by heatherann.

@@ -93,7 +93,7 @@ function _views_natural_sort_store_node($node) {
  */
 function _views_natural_sort_filter_content($content) {
   return preg_replace(array(
-    '/^(The|A)\s/i',
+    '/^(The|A|An|Le|La|L\'|Un|Une)\s/i',
     '/\s(and|of|or)\s/i',
   ), array(
     '',
