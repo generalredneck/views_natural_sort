@@ -49,6 +49,14 @@ function views_natural_sort_install() {
 }
 
 /**
+ * Implementation of hook_enable().
+ */
+function views_natural_sort_enable() {
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');
+  views_natural_sort_rebuild_index_submit();
+}
+
+/**
  * Implementation of hook_uninstall().
  */
 function views_natural_sort_uninstall() {
