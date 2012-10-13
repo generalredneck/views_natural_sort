@@ -1,3 +1,9 @@
+===== 6.x-1.2 ======
+ 
+ * [#546794] Implemented code provided by DanChadwick that sets the base standard for numerical sort.
+ * Fixed a divide-by-zero error when enabling module with no nodes.
+
+
 ===== 6.x-1.1 ======
 
  * [#558668] Applied patch contributed by heatherann.
