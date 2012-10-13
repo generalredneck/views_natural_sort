@@ -61,3 +61,13 @@ function views_natural_sort_enable() {
  */
 function views_natural_sort_uninstall() {
 }
+
+/**
+ * Impliments hook_update_N().
+ *
+ * Rebuild the sorting index after changes made for numerical data.
+ */
+function views_natural_sort_update_7001() {
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');
+  views_natural_sort_rebuild_index_submit();
+}
