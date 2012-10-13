@@ -53,6 +53,11 @@ function views_natural_sort_rebuild_index(&$context) {
     $context['results']['nodes'] = 0;
   }
 
+  if ($sandbox['total'] == 0) {
+    $context['finished'] = 1;
+    return;
+  }
+
   $results = db_query_range('SELECT nid, title FROM {node} WHERE nid > %d AND nid <= %d', $sandbox['current'], $sandbox['max'], 0, 10);
 
   $title = '';
