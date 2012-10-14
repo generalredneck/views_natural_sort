@@ -46,6 +46,26 @@ function views_natural_sort_schema() {
  * Implementation of hook_install().
  */
 function views_natural_sort_install() {
+  variable_set(
+    'views_natural_sort_beginning_words_remove',
+    array(
+      t('The'),
+      t('A'),
+      t('An'),
+      t('La'),
+      t('Le'),
+      t('Il')
+    )
+  );
+  variable_set(
+    'views_natural_sort_words_remove',
+    array(
+      t('and'),
+      t('or'),
+      t('of'),
+    )
+  );
+  variable_set('views_natural_sort_symbols_remove', "#\"'\\()[]");
 }
 
 /**
@@ -60,6 +80,9 @@ function views_natural_sort_enable() {
  * Implementation of hook_uninstall().
  */
 function views_natural_sort_uninstall() {
+  variable_del('views_natural_sort_beginning_words_remove');
+  variable_del('views_natural_sort_words_remove');
+  variable_del('views_natural_sort_symbols_remove');
 }
 
 /**

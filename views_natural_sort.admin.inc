@@ -5,12 +5,12 @@
  */
 
 /**
- * Form callback for Views Natural Sort settings page..
+ * Form callback for Views Natural Sort Rebuild Index page.
  *
  * Allows rebuilding index but should also allow things like limiting what node
  * types are indexed and cck text field index options.
  */
-function views_natural_sort_settings_form() {
+function views_natural_sort_rebuild_index_form() {
   $form = array();
 
   $form['rebuild'] = array(
@@ -20,6 +20,60 @@ function views_natural_sort_settings_form() {
   );
 
   return $form;
+}
+
+/**
+ * Form callback for the Views Natural Sort settings page
+ *
+ * Allows the removal of specific words and symbols from all your titles.
+ */
+function views_natural_sort_settings_form() {
+  $form = array();
+
+  $form['beginning_words'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Words to filter from the beginning of a phrase',
+    '#default_value' => implode(',', variable_get('views_natural_sort_beginning_words_remove', array())),
+    '#description' => t('Commonly, the words "A", "The", and "An" are removed when sorting book titles if they appear at the beginning of the title. Those would be great candidates for this field.'),
+  );
+
+  $form['words'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Words to filter from anywhere in a phrase',
+    '#default_value' => implode(',', variable_get('views_natural_sort_words_remove', array())),
+    '#description' => t('Commonly used words like "of", "and", and "or" are removed when sorting book titles. Those type of words go here.'),
+  );
+
+  $form['symbols'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Symbols to filter from anywhere in a phrase',
+    '#default_value' => variable_get('views_natural_sort_symbols_remove', ''),
+    '#description' => t('Most symbols are ignored when performing a sort naturally. Those symbols you want ignored go here. Do not seperated.'),
+  );
+
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save Settings'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit handler that saves custom word handlers and other settings.
+ */
+function views_natural_sort_settings_form_submit($form, &$form_state) {
+  $beginning_words = explode(',',$form_state['values']['beginning_words']);
+  array_walk($beginning_words, create_function('&$val', '$val = trim($val);'));
+  $words = explode(',',$form_state['values']['words']);
+  array_walk($words, create_function('&$val', '$val = trim($val);'));
+  $symbols = trim($form_state['values']['symbols']);
+
+  variable_set('views_natural_sort_beginning_words_remove', $beginning_words);
+  variable_set('views_natural_sort_words_remove', $words);
+  variable_set('views_natural_sort_symbols_remove', $symbols);
+
+  views_natural_sort_rebuild_index_submit();
 }
 
 /**
