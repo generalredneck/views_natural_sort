@@ -125,26 +125,38 @@ function _views_natural_sort_store_node($node) {
  */
 function views_natural_sort_encode($string) {
 
-  $beginning_words = variable_get('views_natural_sort_beginning_words_remove', array());
   $words = variable_get('views_natural_sort_words_remove', array());
+  $beginning_words = variable_get('views_natural_sort_beginning_words_remove', array());
+
   $symbols = variable_get('views_natural_sort_symbols_remove', '');
 
   // Get the words ready for being put in a regex.
   array_walk($beginning_words, 'preg_quote');
   array_walk($words, 'preg_quote');
 
-  $beginning_words_regex = '/^(' . implode('|', $beginning_words) . ')\s+/i';
-  $words_regex = '/\s(' . implode('|', $words) . ')\s+/i';
-  $symbols_regex = '/[' . preg_quote($symbols) . ']/';
+  $regex = array();
+  $replace = array();
 
+  // Remove words from the beginning only!
   if (!empty($beginning_words)) {
-    $string = preg_replace($beginning_words_regex, '', $string);
+    $regex[] = '/^(' . implode('|', $beginning_words) . ')\s+/i';
   }
-  if (strlen($symbols) != 0) {
-    $string = preg_replace($symbols_regex, '', $string);
-  }
+  // Remove words reguardless where they are as long as they are a word.
   if (!empty($words)) {
-    $string = preg_replace($words_regex, ' ', $string);
+    $regex[] = '/\s(' . implode('|', $words) . ')\s+/i';
+    $replace[] = ' ';
+    $regex[] = '/^(' . implode('|', $words) . ')\s+/i';
+    $replace[] = '';
+  }
+
+  // Remove symbols.
+  if (strlen($symbols) != 0) {
+    $regex[] = '/[' . preg_quote($symbols) . ']/';
+    $replace[] = '';
+  }
+
+  if (!empty($regex) && !empty($replace)) {
+    $string = preg_replace($regex, $replace, $string);
   }
 
   // Find an optional leading dash (either preceded by whitespace or the first character) followed
