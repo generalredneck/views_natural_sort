@@ -34,21 +34,21 @@ function views_natural_sort_settings_form() {
     '#type' => 'textfield',
     '#title' => 'Words to filter from the beginning of a phrase',
     '#default_value' => implode(',', variable_get('views_natural_sort_beginning_words_remove', array())),
-    '#description' => t('Commonly, the words "A", "The", and "An" are removed when sorting book titles if they appear at the beginning of the title. Those would be great candidates for this field.'),
+    '#description' => t('Commonly, the words "A", "The", and "An" are removed when sorting book titles if they appear at the beginning of the title. Those would be great candidates for this field. Separate words with a comma.'),
   );
 
   $form['words'] = array(
     '#type' => 'textfield',
     '#title' => 'Words to filter from anywhere in a phrase',
     '#default_value' => implode(',', variable_get('views_natural_sort_words_remove', array())),
-    '#description' => t('Commonly used words like "of", "and", and "or" are removed when sorting book titles. Those type of words go here.'),
+    '#description' => t('Commonly used words like "of", "and", and "or" are removed when sorting book titles. Words you would like filtered go here. Separate words with a comma.'),
   );
 
   $form['symbols'] = array(
     '#type' => 'textfield',
     '#title' => 'Symbols to filter from anywhere in a phrase',
     '#default_value' => variable_get('views_natural_sort_symbols_remove', ''),
-    '#description' => t('Most symbols are ignored when performing a sort naturally. Those symbols you want ignored go here. Do not seperated.'),
+    '#description' => t('Most symbols are ignored when performing a sort naturally. Those symbols you want ignored go here. Do not use a separator. EX: &$".'),
   );
 
   $form['save'] = array(
