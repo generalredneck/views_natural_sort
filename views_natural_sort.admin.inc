@@ -107,12 +107,13 @@ function views_natural_sort_rebuild_index(&$context) {
       array('max' => $sandbox['max'])
     )->fetchField();
 
+    $sandbox['current'] = 0;
+    $context['results']['nodes'] = 0;
+
     if ($sandbox['total'] == 0) {
       $context['finished'] = 1;
       return;
     }
-    $sandbox['current'] = 0;
-    $context['results']['nodes'] = 0;
   }
 
   $results = db_query_range(
