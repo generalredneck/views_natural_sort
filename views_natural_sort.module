@@ -141,15 +141,16 @@ function views_natural_sort_encode($string) {
   $words_regex = '/\s(' . implode('|', $words) . ')\s+/i';
   $symbols_regex = '/[' . preg_quote($symbols) . ']/';
 
-  $string = preg_replace(array(
-    $beginning_words_regex,
-    $symbols_regex,
-    $words_regex,
-  ), array(
-    '',
-    '',
-    ' ',
-  ), $string);
+  if (!empty($beginning_words)) {
+    $string = preg_replace($beginning_words_regex, '', $string);
+  }
+  if (strlen($symbols) != 0) {
+    $string = preg_replace($symbols_regex, '', $string);
+  }
+  if (!empty($words)) {
+    $string = preg_replace($words_regex, ' ', $string);
+  }
+
   // Find an optional leading dash (either preceded by whitespace or the first character) followed
   // by either:
   //   - an optional series of digits (with optional imbedded commas), then a period, then an optional series of digits OR
