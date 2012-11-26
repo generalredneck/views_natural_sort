@@ -140,6 +140,7 @@ function views_natural_sort_encode($string) {
   // Remove words from the beginning only!
   if (!empty($beginning_words)) {
     $regex[] = '/^(' . implode('|', $beginning_words) . ')\s+/i';
+    $replace[] = '';
   }
   // Remove words reguardless where they are as long as they are a word.
   if (!empty($words)) {
