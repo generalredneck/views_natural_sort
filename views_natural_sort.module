@@ -85,10 +85,20 @@ function views_natural_sort_node_update($node) {
 }
 
 /**
+ * Implementation of hook_node_delete().
+ *
+ * This keep sour natural sort index clean.
+ */
+function views_natural_sort_node_delete($node) {
+  _views_natural_sort_remove_node($node);
+}
+
+/**
  * Helper function for writing node data to our sort index.
  *
  * @param $node
  * A drupal node object containing at least a nid and title.
+ *
  * @return int
  * MergeQuery::STATUS_UPDATE or MergeQuery::STATUS_INSERT
  */
@@ -103,6 +113,21 @@ function _views_natural_sort_store_node($node) {
       'field' => 'title',
       'content' => views_natural_sort_encode($node->title)
     ))
+    ->execute();
+}
+
+/**
+ * Helper function for removing node data from our sort index.
+ *
+ * @param $node
+ * A drupal node object containing at least a nid.
+ *
+ * @return int
+ * The number of rows deleted.
+ */
+function _views_natural_sort_remove_node($node) {
+  return db_delete('views_natural_sort')
+    ->condition('nid', $node->nid)
     ->execute();
 }
 
