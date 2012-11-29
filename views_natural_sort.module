@@ -79,6 +79,8 @@ function views_natural_sort_nodeapi(&$node, $op) {
     case 'insert':
       _views_natural_sort_store_node($node);
       break;
+    case 'delete':
+      _views_natural_sort_remove_node($node);
   }
 }
 
@@ -100,6 +102,16 @@ function _views_natural_sort_store_node($node) {
   }
 
   return $return;
+}
+
+/**
+ * _views_natural_sort_remove_node
+ *
+ * @param $node
+ * A drupal node object containing at least a nid.
+ */
+function _views_natural_sort_remove_node($node) {
+  db_query('DELETE FROM {views_natural_sort} WHERE nid = %d', $node->nid);
 }
 
 /**
