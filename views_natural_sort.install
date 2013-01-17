@@ -14,11 +14,18 @@ function views_natural_sort_schema() {
   $schema['views_natural_sort'] = array(
     'description' => t('Compressed titles for natural sorting.'),
     'fields' => array(
-      'nid' => array(
-        'description' => t('Node id'),
+      'eid' => array(
+        'description' => t('Entity id'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
+      ),
+      'entity_type' => array(
+        'description' => t('Entity Type'),
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => 'node',
       ),
       'field' => array(
         'description' => t('The field name. This will be title or some cck text field, etc.'),
@@ -35,8 +42,7 @@ function views_natural_sort_schema() {
         'default' => '',
       ),
     ),
-    'key' => array('nid', 'field', 'content'),
-    'primary key' => array('nid', 'field'),
+    'primary key' => array('eid', 'entity_type', 'field'),
   );
 
   return $schema;
@@ -93,4 +99,32 @@ function views_natural_sort_uninstall() {
 function views_natural_sort_update_7001() {
   module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');
   views_natural_sort_rebuild_index_submit();
+}
+function views_natural_sort_update_7200() {
+  db_drop_primary_key('views_natural_sort');
+  db_add_field(
+    'views_natural_sort',
+    'entity_type',
+    array(
+      'description' => t('Entity Type'),
+      'type' => 'varchar',
+      'length' => 128,
+      'not null' => TRUE,
+      'default' => 'node'
+    )
+  );
+  db_change_field(
+    'views_natural_sort',
+    'nid',
+    'eid',
+    array(
+      'description' => t('Entity id'),
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+    ),
+    array(
+      'primary key' => array('eid', 'entity_type', 'field'),
+    )
+  );
 }
