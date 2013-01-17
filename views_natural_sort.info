@@ -3,3 +3,6 @@ description = Sort results naturaly on a text field skipping articles like "the"
 dependencies[] = views
 package = Views
 core = 7.x
+
+; Views handlers
+files[] = handlers/views_natural_sort_handler_sort.inc
