@@ -16,6 +16,7 @@ class views_natural_sort_handler_sort extends views_handler_sort {
     switch ($this->options['order']) {
       case 'NASC':
       case 'NDESC':
+        $this->ensure_my_table();
         $order = substr($this->options['order'], 1);
         $vns_alias = $this->query->ensure_table('views_natural_sort');
         $this->query->add_orderby($vns_alias, 'content', $order);
