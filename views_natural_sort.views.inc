@@ -8,7 +8,6 @@
  */
 
 function views_natural_sort_views_data_alter(&$data) {
-  // TODO: Add a field and argument handler to support grouping.
   $data['node']['title']['sort']['handler'] = 'views_natural_sort_handler_sort';
 }
 
