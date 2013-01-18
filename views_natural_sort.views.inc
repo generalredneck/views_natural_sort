@@ -7,26 +7,6 @@
  * is most of the code.
  */
 
-/**
- * Implementation of hook_views_data().
- */
-function views_natural_sort_views_data() {
-
-  $data['views_natural_sort']['table']['join'] = array(
-    'node' => array(
-      'left_field' => 'nid',
-      'field' => 'eid',
-      'extra' => array(
-        array(
-          'field' => 'entity_type',
-          'value' => 'node',
-        )
-      )
-    ),
-  );
-  return $data;
-}
-
 function views_natural_sort_views_data_alter(&$data) {
   // TODO: Add a field and argument handler to support grouping.
   $data['node']['title']['sort']['handler'] = 'views_natural_sort_handler_sort';
@@ -52,21 +32,7 @@ function views_natural_sort_field_views_data_alter(&$data, $field, $module) {
       $current_view_field_column = $field['field_name'] . '_' . $column_name;
 
       $view_fields[] = $current_view_field_column;
-      $data[$field_table][$current_view_field_column]['sort']['handler'] = 'views_natural_sort_handler_sort';
+      $data[$field_table][$current_view_field_column]['sort']['handler'] = 'views_natural_sort_handler_sort_text_field';
     }
-    $data['views_natural_sort']['table']['join'][$field_table] = array(
-      'left_field' => 'entity_id',
-      'field' => 'eid',
-      'extra' => array(
-        array(
-          'field' => 'entity_type',
-          'value' => $entity_type,
-        ),
-        array(
-          'field' => 'field',
-          'value' => $view_fields,
-        ),
-      ),
-    );
   }
 }
