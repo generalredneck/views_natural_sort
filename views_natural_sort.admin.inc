@@ -98,17 +98,21 @@ function views_natural_sort_rebuild_index(&$context) {
   // Alias sandbox for easier referencing.
   $sandbox = &$context['sandbox'];
 
+  // Hook for modules to implement and return data that views_natural_sort can
+  // store as an index for that module's entries.
+  $index_entries = module_invoke_all('views_natural_sort_get_rebuild_data');
+
+  //TODO: this seems like it has the possiblity to produce unused data.
+  // Consider a delete of some sort.
+
   // Initialize our context.
   if (!isset($sandbox['max'])) {
     $sandbox['progress'] = 0;
-    $sandbox['max'] = db_query('SELECT MAX(nid) FROM {node}')->fetchField();
-    $sandbox['total'] = db_query(
-      'SELECT COUNT(nid) FROM {node} WHERE nid <= :max',
-      array('max' => $sandbox['max'])
-    )->fetchField();
+    $sandbox['max'] = count($index_entries) - 1;
+    $sandbox['total'] = count($index_entries);
 
     $sandbox['current'] = 0;
-    $context['results']['nodes'] = 0;
+    $context['results']['entries'] = 0;
 
     if ($sandbox['total'] == 0) {
       $context['finished'] = 1;
@@ -116,23 +120,20 @@ function views_natural_sort_rebuild_index(&$context) {
     }
   }
 
-  $results = db_query_range(
-    'SELECT nid, title FROM {node} WHERE nid > :current AND nid <= :max',
-    0,
-    10,
-    array('current' => $sandbox['current'], 'max' => $sandbox['max'])
-  );
+  $results = array_slice($index_entries, $sandbox['current'], 10);
 
-  $title = '';
+  $entity_type = '';
+  $field = '';
   foreach ($results as $row) {
-    _views_natural_sort_store_node($row);
+    views_natural_sort_store($row);
     ++$sandbox['progress'];
     $sandbox['current'] = $row->nid;
-    $title = $row->title;
-    ++$context['results']['nodes'];
+    $entity_type = $row['entity_type'];
+    $field = $row['field'];
+    ++$context['results']['entries'];
   }
 
-  $context['message'] = t('Processing node %title', array('%title' => $title));
+  $context['message'] = t('Processing %entity_type %field', array('%entity_type' => $entity_type, '%field' => $field));
 
   $context['finished'] = $sandbox['progress'] / $sandbox['total'];
 }
@@ -144,7 +145,7 @@ function views_natural_sort_rebuild_index_finished($success, $results, $operatio
   if ($success) {
     drupal_set_message(t('Index update has completed.'));
     drupal_set_message(t('Indexed %count.', array(
-      '%count' => format_plural($results['nodes'], '1 node', '@count nodes'),
+      '%count' => format_plural($results['entries'], '1 entry', '@count entries'),
     )));
   }
 }

@@ -1,0 +1,16 @@
+<?php
+
+function views_natural_sort_text_field_views_api() {
+  return array(
+    'api' => 2.0,
+  );
+}
+
+function views_natural_sort_text_field_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  $form['field']['views_natural_sort'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable natural sorting.'),
+    '#description' => t('Selecting this option will process and index this field\'s value for natural sorting in views.'),
+    '#default_value' => 0,
+  );
+}

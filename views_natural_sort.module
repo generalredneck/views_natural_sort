@@ -57,6 +57,35 @@ function views_natural_sort_menu() {
   return $items;
 }
 
+function views_natural_sort_store($index_entry) {
+  //This should take a formatted object and store it into the views_natural_sort table.
+  return db_merge('views_natural_sort')
+    ->key(array(
+      'eid' => $index_entry['eid'],
+      'entity_type' => $index_entry['entity_type'],
+      'field' => $index_entry['field'],
+      'delta' => $index_entry['delta'],
+    ))
+    ->fields(array(
+      'eid' => $index_entry['eid'],
+      'entity_type' => $index_entry['entity_type'],
+      'field' => $index_entry['field'],
+      'delta' => $index_entry['delta'],
+      'content' => views_natural_sort_encode($index_entry),
+    ))
+    ->execute();
+}
+
+function views_natural_sort_remove($index_entry) {
+  //TODO: Make sure all the keys are in the index_entry.
+  return db_delete('views_natural_sort')
+    ->condition('eid', $index_entry['eid'])
+    ->condition('entity_type', $index_entry['entity_type'])
+    ->condition('field', $index_entry['field'])
+    ->condition('delta', $index_entry['delta'])
+    ->execute();
+}
+
 /**
  * Implementation of hook_views_api().
  */
@@ -64,6 +93,157 @@ function views_natural_sort_views_api() {
   return array(
     'api' => 2.0,
   );
+}
+
+/**
+ * Encodes a string into an ascii-sortable such:
+ *  - Leading articles in common languages are ingored: The A An El La Le Il
+ *  - Unimportant punctuation is ignored: # ' " ( )
+ *  - Unimportant words are ignored: and of or
+ *  - Embeded numbers will sort in numerical order. The following possiblities
+ *    are supported
+ *    - A leading dash indicates a negative number, unless it is preceded by a
+ *      non-whitespace character, which case it is considered just a dash.
+ *    - Leading zeros are properly ignored so as to not influence sort order
+ *    - Decimal numbers are supported using a period as the decimal character
+ *    - Thousands separates are ignored, using the comma as the thous. character
+ *    - Numbers may be up to 99 digits before the decimal, up to the precision
+ *      of the processor.
+ *
+ * @param $string string
+ *   The string to be encoded
+ *
+ * @return string
+ *   The encoded string
+ */
+function views_natural_sort_encode($index_entry) {
+
+  // Get copy the original string.
+  $string = $index_entry['content'];
+
+  foreach (views_natural_sort_get_transformations($index_entry) as $transformation_method) {
+    $string = $transformation_method($string);
+  }
+
+  return $string;
+}
+
+function views_natural_sort_get_transformations($index_entry) {
+  $transformations = array(
+    'views_natural_sort_remove_beginning_words',
+    'views_natural_sort_remove_words',
+    'views_natural_sort_remove_symbols',
+    'views_natural_sort_numbers',
+  );
+
+  //Allow other modules to modify the transformation that happens here if needed.
+  drupal_alter('views_ntural_sort_transformations', $transformations, $index_entry);
+
+  return $transformations;
+}
+
+function views_natural_sort_remove_beginning_words($string) {
+  $beginning_words = variable_get('views_natural_sort_beginning_words_remove', array());
+  if (empty($beginning_words)) {
+    return $string;
+  }
+
+  array_walk($beginning_words, 'preg_quote');
+  return preg_replace(
+    '/^(' . implode('|', $beginning_words) . ')\s+/i',
+    '',
+    $string
+  );
+}
+
+function views_natural_sort_remove_words($string) {
+  $words = variable_get('views_natural_sort_words_remove', array());
+  if (empty($words)) {
+    return $string;
+  }
+
+  array_walk($words, 'preg_quote');
+  return preg_replace(
+    array(
+      '/\s(' . implode('|', $words) . ')\s+/i',
+      '/^(' . implode('|', $words) . ')\s+/i',
+    ),
+    array(
+      ' ',
+      ''
+    ),
+    $string
+  );
+}
+
+function views_natural_sort_remove_symbols($string) {
+  $symbols = variable_get('views_natural_sort_symbols_remove', '');
+  if (strlen($symbols) == 0) {
+    return $string;
+  }
+  return preg_replace(
+    '/[' . preg_quote($symbols) . ']/',
+    '',
+    $string
+  );
+}
+
+function views_natural_sort_numbers($string) {
+  // Find an optional leading dash (either preceded by whitespace or the first character) followed
+  // by either:
+  //   - an optional series of digits (with optional imbedded commas), then a period, then an optional series of digits OR
+  //   - a series of digits (with optional imbedded commas)
+  return preg_replace_callback(
+    '/(\s-|^-)?(?:(\d[\d,]*)?\.(\d+)|(\d[\d,]*))/',
+    '_views_natural_sort_number_encode_match_callback',
+    $string
+  );
+}
+
+/**
+ * Encodes a string representing numbers into a special format that can be sorted alphanumerically.
+ *
+ * @param array $match
+ *   array of matches passed from preg_replace_callback
+ *   $match[0] is the entire matching string
+ *   $match[1] if present, is the optional dash, preceded by optional whitespace
+ *   $match[2] if present, is whole number portion of the decimal number
+ *   $match[3] if present, is the fractional portion of the decimal number
+ *   $match[4] if present, is the integer (when no fraction is matched)
+ *
+ * @return string
+ *   String representing a numerical value that will sort numerically in an
+ *   alphanumeric search.
+ */
+function _views_natural_sort_number_encode_match_callback($match) {
+
+  // Remove commas and leading zeros from whole number
+  $whole = (string)(int)str_replace(',', '', (isset($match[4]) && strlen($match[4]) > 0) ? $match[4] : $match[2]);
+  // Remove traililng 0's from fraction, then add the decimal and one trailing 0
+  $fraction = trim('.' . $match[3], '0') . '0';
+  $encode = sprintf('%02u', strlen($whole)) . $whole . $fraction;
+  if (strlen($match[1])) {
+    // Negative number. Make 10's complement. Put back any leading white space and the dash
+    // Requires intermediate to avoid double-replacing the same digit. str_replace seems to
+    // work by copying the source to the result, then successively replacing within it,
+    // rather than replacing from the source to the result.
+    $digits       = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
+    $intermediate = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j');
+    $rev_digits   = array('9', '8', '7', '6', '5', '4', '3', '2', '1', '0');
+    $encode = $match[1] . str_replace($intermediate, $rev_digits, str_replace($digits, $intermediate, $encode));
+  }
+  return $encode;
+}
+
+function views_natural_sort_views_natural_sort_get_rebuild_data(){
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid', 'title'))
+    ->execute();
+  $data = array();
+  foreach ($result as $row ) {
+    $data[] = _views_natural_sort_node_to_vns($node);
+  }
+  return $data;
 }
 
 /**
@@ -103,17 +283,17 @@ function views_natural_sort_node_delete($node) {
  * MergeQuery::STATUS_UPDATE or MergeQuery::STATUS_INSERT
  */
 function _views_natural_sort_store_node($node) {
-  return db_merge('views_natural_sort')
-    ->key(array(
-      'nid' => $node->nid,
-      'field' => 'title'
-    ))
-    ->fields(array(
-      'nid' => $node->nid,
-      'field' => 'title',
-      'content' => views_natural_sort_encode($node->title)
-    ))
-    ->execute();
+  views_natural_sort_store(_views_natural_sort_node_to_vns($node));
+}
+
+function _views_natural_sort_node_to_vns($node) {
+  return array(
+    'eid' => $node->nid,
+    'entity_type' => 'node',
+    'field' => 'title',
+    'delta' => 0,
+    'content' => $node->title,
+  );
 }
 
 /**
@@ -126,112 +306,11 @@ function _views_natural_sort_store_node($node) {
  * The number of rows deleted.
  */
 function _views_natural_sort_remove_node($node) {
-  return db_delete('views_natural_sort')
-    ->condition('nid', $node->nid)
-    ->execute();
+  return views_natural_sort_remove(array(
+    'eid' => $node->nid,
+    'entity_type' => 'node',
+    'field' => 'title',
+    'delta' => 0,
+  ));
 }
 
-/**
- * Encodes a string into an ascii-sortable such:
- *  - Leading articles in common languages are ingored: The A An El La Le Il
- *  - Unimportant punctuation is ignored: # ' " ( )
- *  - Unimportant words are ignored: and of or
- *  - Embeded numbers will sort in numerical order. The following possiblities
- *    are supported
- *    - A leading dash indicates a negative number, unless it is preceded by a
- *      non-whitespace character, which case it is considered just a dash.
- *    - Leading zeros are properly ignored so as to not influence sort order
- *    - Decimal numbers are supported using a period as the decimal character
- *    - Thousands separates are ignored, using the comma as the thous. character
- *    - Numbers may be up to 99 digits before the decimal, up to the precision
- *      of the processor.
- *
- * @param $string string
- *   The string to be encoded
- *
- * @return string
- *   The encoded string
- */
-function views_natural_sort_encode($string) {
-
-  $words = variable_get('views_natural_sort_words_remove', array());
-  $beginning_words = variable_get('views_natural_sort_beginning_words_remove', array());
-
-  $symbols = variable_get('views_natural_sort_symbols_remove', '');
-
-  // Get the words ready for being put in a regex.
-  array_walk($beginning_words, 'preg_quote');
-  array_walk($words, 'preg_quote');
-
-  $regex = array();
-  $replace = array();
-
-  // Remove words from the beginning only!
-  if (!empty($beginning_words)) {
-    $regex[] = '/^(' . implode('|', $beginning_words) . ')\s+/i';
-    $replace[]='';
-  }
-  // Remove words reguardless where they are as long as they are a word.
-  if (!empty($words)) {
-    $regex[] = '/\s(' . implode('|', $words) . ')\s+/i';
-    $replace[] = ' ';
-    $regex[] = '/^(' . implode('|', $words) . ')\s+/i';
-    $replace[] = '';
-  }
-
-  // Remove symbols.
-  if (strlen($symbols) != 0) {
-    $regex[] = '/[' . preg_quote($symbols) . ']/';
-    $replace[] = '';
-  }
-
-  if (!empty($regex) && !empty($replace)) {
-    $string = preg_replace($regex, $replace, $string);
-  }
-
-  // Find an optional leading dash (either preceded by whitespace or the first character) followed
-  // by either:
-  //   - an optional series of digits (with optional imbedded commas), then a period, then an optional series of digits OR
-  //   - a series of digits (with optional imbedded commas)
-  $string = preg_replace_callback(
-    '/(\s-|^-)?(?:(\d[\d,]*)?\.(\d+)|(\d[\d,]*))/',
-    '_views_natural_sort_number_encode_match_callback',
-    $string
-  );
-  return $string;
-}
-
-/**
- * Encodes a string representing numbers into a special format that can be sorted alphanumerically.
- *
- * @param array $match
- *   array of matches passed from preg_replace_callback
- *   $match[0] is the entire matching string
- *   $match[1] if present, is the optional dash, preceded by optional whitespace
- *   $match[2] if present, is whole number portion of the decimal number
- *   $match[3] if present, is the fractional portion of the decimal number
- *   $match[4] if present, is the integer (when no fraction is matched)
- *
- * @return string
- *   String representing a numerical value that will sort numerically in an
- *   alphanumeric search.
- */
-function _views_natural_sort_number_encode_match_callback($match) {
-
-  // Remove commas and leading zeros from whole number
-  $whole = (string)(int)str_replace(',', '', (isset($match[4]) && strlen($match[4]) > 0) ? $match[4] : $match[2]);
-  // Remove traililng 0's from fraction, then add the decimal and one trailing 0
-  $fraction = trim('.' . $match[3], '0') . '0';
-  $encode = sprintf('%02u', strlen($whole)) . $whole . $fraction;
-  if (strlen($match[1])) {
-    // Negative number. Make 10's complement. Put back any leading white space and the dash
-    // Requires intermediate to avoid double-replacing the same digit. str_replace seems to
-    // work by copying the source to the result, then successively replacing within it,
-    // rather than replacing from the source to the result.
-    $digits       = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
-    $intermediate = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j');
-    $rev_digits   = array('9', '8', '7', '6', '5', '4', '3', '2', '1', '0');
-    $encode = $match[1] . str_replace($intermediate, $rev_digits, str_replace($digits, $intermediate, $encode));
-  }
-  return $encode;
-}

@@ -1,9 +1,8 @@
 name = Views Natural Sort
-description = Sort results naturaly on a text field skipping articles like "the" and "a." 
+description = Sort results naturaly on a node's title skipping articles like "the" and "a." 
 dependencies[] = views
 package = Views
 core = 7.x
 
 ; Views handlers
 files[] = handlers/views_natural_sort_handler_sort.inc
-files[] = handlers/views_natural_sort_handler_sort_text_field.inc

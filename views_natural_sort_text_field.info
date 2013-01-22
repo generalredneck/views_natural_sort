@@ -1,0 +1,8 @@
+name = Views Natural Sort Text Field Support
+description = Sort results naturaly on a text field skipping articles like "the" and "a." 
+dependencies[] = views_natural_sort
+package = Views
+core = 7.x
+
+; Views handlers
+files[] = handlers/views_natural_sort_handler_sort_text_field.inc

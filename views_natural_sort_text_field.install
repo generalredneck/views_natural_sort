@@ -1,0 +1,6 @@
+<?php
+
+function views_natural_sort_text_field_enable() {
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');
+  views_natural_sort_rebuild_index_submit();
+}
