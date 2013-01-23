@@ -6,3 +6,4 @@ core = 7.x
 
 ; Views handlers
 files[] = handlers/views_natural_sort_handler_sort.inc
+files[] = views_natrual_sort.test

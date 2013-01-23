@@ -241,7 +241,7 @@ function views_natural_sort_views_natural_sort_get_rebuild_data(){
     ->execute();
   $data = array();
   foreach ($result as $row ) {
-    $data[] = _views_natural_sort_node_to_vns($node);
+    $data[] = _views_natural_sort_node_to_vns($row);
   }
   return $data;
 }

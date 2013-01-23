@@ -1,0 +1,58 @@
+<?php
+
+class ViewsNaturalSortTest extends DrupalUnitTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Views Natural Sort Tests',
+      'description' => 'Test that Views Natural Sort Module works correctly.',
+      'group' => 'VNS',
+    );
+  }
+  
+  public function testNodeAdd(){
+    $node = new StdClass();
+    $node->type = 'article';
+    node_object_prepare($node);
+    $node->title = 'All American';
+    $node->status = 1;
+    node_save($node);
+    $this->assertNotNull($node->nid, 'The test node did not save properly.');
+    $vns_entry = db_select('views_natural_sort','vns')
+      ->fields('vns')
+      ->condition('eid', $node->nid)
+      ->execute()
+      ->fetchAssoc();
+    $this->assertEqual($vns_entry, array(
+      'eid' => $node->nid,
+      'entity_type' => 'node',
+      'field' => 'title',
+      'delta' => '0',
+      'content' => 'All American'
+    ));
+  }
+  
+  public function testNodeRemove(){
+    $this->assertTrue(FALSE);
+  }
+
+  public function testNodeChange(){
+    $this->assertTrue(FALSE);
+  }
+
+  public function testRemoveBeginningWordsTransformation(){
+    $this->assertTrue(FALSE);
+  }
+
+  public function testRemoveWordsTransformation(){
+    $this->assertTrue(FALSE);
+  }
+
+  public function testNumberTransfomration(){
+    $this->assertTrue(FALSE);
+  }
+
+  public function testViewSort(){
+    $this->assertTrue(FALSE);
+  }
+}

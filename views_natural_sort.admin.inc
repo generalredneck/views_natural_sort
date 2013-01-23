@@ -120,14 +120,14 @@ function views_natural_sort_rebuild_index(&$context) {
     }
   }
 
-  $results = array_slice($index_entries, $sandbox['current'], 10);
+  $results = array_slice($index_entries, $sandbox['current'], 100);
 
   $entity_type = '';
   $field = '';
   foreach ($results as $row) {
     views_natural_sort_store($row);
     ++$sandbox['progress'];
-    $sandbox['current'] = $row->nid;
+    $sandbox['current'] = $sandbox['progress'];
     $entity_type = $row['entity_type'];
     $field = $row['field'];
     ++$context['results']['entries'];
