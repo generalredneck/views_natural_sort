@@ -57,6 +57,11 @@ function views_natural_sort_menu() {
   return $items;
 }
 
+function views_natural_sort_store_multiple(array $index_entries) {
+  foreach($index_entries as $entry) {
+    views_natural_sort_store($entry);
+  }
+}
 function views_natural_sort_store($index_entry) {
   //This should take a formatted object and store it into the views_natural_sort table.
   return db_merge('views_natural_sort')
@@ -91,7 +96,7 @@ function views_natural_sort_remove($index_entry) {
  */
 function views_natural_sort_views_api() {
   return array(
-    'api' => 2.0,
+    'api' => 3.0,
   );
 }
 
