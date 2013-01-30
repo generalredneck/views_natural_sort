@@ -240,7 +240,17 @@ function _views_natural_sort_number_encode_match_callback($match) {
   return $encode;
 }
 
-function views_natural_sort_views_natural_sort_get_rebuild_data(){
+function views_natural_sort_views_natural_sort_get_entry_types() {
+  return array(array(
+    'entity_type' => 'node',
+    'field' => 'title',
+  ));
+}
+
+function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
+  if($entry_type['entity_type'] != 'node' || $entry_type['field'] != 'title') {
+    return array();
+  }
   $result = db_select('node', 'n')
     ->fields('n', array('nid', 'title'))
     ->execute();

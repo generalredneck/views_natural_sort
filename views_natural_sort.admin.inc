@@ -80,10 +80,21 @@ function views_natural_sort_settings_form_submit($form, &$form_state) {
  * Submit handler that triggers the rebuild_index batch.
  */
 function views_natural_sort_rebuild_index_submit() {
+  views_natural_sort_rebuild_index_batch_set();
+}
+
+function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()) {
+  if (empty($entry_types)) {
+    $entry_types = module_invoke_all('views_natural_sort_get_entry_types');
+  }
+  $operations = array();
+
+  foreach($entry_types as $entry_type) {
+    $operations[] = array('views_natural_sort_rebuild_index', array($entry_type));
+  }
   $batch = array(
-    'operations' => array(
-      array('views_natural_sort_rebuild_index', array()),
-    ),
+    'operations' => $operations,
+    'title' => t('Rebuilding Views Natural Sort Indexing Entries'),
     'finished' => 'views_natural_sort_rebuild_index_finished',
     'file' => drupal_get_path('module', 'views_natural_sort') . '/views_natural_sort.admin.inc',
   );
@@ -94,13 +105,14 @@ function views_natural_sort_rebuild_index_submit() {
 /**
  * Batch API callback for rebuild_index.
  */
-function views_natural_sort_rebuild_index(&$context) {
+function views_natural_sort_rebuild_index($entry_type, &$context) {
+  dvm($entry_type);
   // Alias sandbox for easier referencing.
   $sandbox = &$context['sandbox'];
 
   // Hook for modules to implement and return data that views_natural_sort can
   // store as an index for that module's entries.
-  $index_entries = module_invoke_all('views_natural_sort_get_rebuild_data');
+  $index_entries = module_invoke_all('views_natural_sort_get_rebuild_data', $entry_type);
 
   //TODO: this seems like it has the possiblity to produce unused data.
   // Consider a delete of some sort.
@@ -112,7 +124,6 @@ function views_natural_sort_rebuild_index(&$context) {
     $sandbox['total'] = count($index_entries);
 
     $sandbox['current'] = 0;
-    $context['results']['entries'] = 0;
 
     if ($sandbox['total'] == 0) {
       $context['finished'] = 1;
