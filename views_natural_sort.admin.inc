@@ -87,6 +87,7 @@ function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()
   if (empty($entry_types)) {
     $entry_types = module_invoke_all('views_natural_sort_get_entry_types');
   }
+  dvm($entry_types);
   $operations = array();
 
   foreach($entry_types as $entry_type) {
@@ -106,13 +107,13 @@ function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()
  * Batch API callback for rebuild_index.
  */
 function views_natural_sort_rebuild_index($entry_type, &$context) {
-  dvm($entry_type);
   // Alias sandbox for easier referencing.
   $sandbox = &$context['sandbox'];
 
   // Hook for modules to implement and return data that views_natural_sort can
   // store as an index for that module's entries.
   $index_entries = module_invoke_all('views_natural_sort_get_rebuild_data', $entry_type);
+  dvm($index_entries);
 
   //TODO: this seems like it has the possiblity to produce unused data.
   // Consider a delete of some sort.
