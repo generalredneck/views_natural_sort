@@ -106,7 +106,6 @@ function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()
  * Batch API callback for rebuild_index.
  */
 function views_natural_sort_rebuild_index($entry_type, &$context) {
-  dvm($entry_type);
   // Alias sandbox for easier referencing.
   $sandbox = &$context['sandbox'];
 
