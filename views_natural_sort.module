@@ -124,10 +124,20 @@ function views_natural_sort_views_api() {
 function views_natural_sort_encode($index_entry) {
 
   // Get copy the original string.
-  $string = $index_entry['content'];
+  $string = $origninal_string = $index_entry['content'];
 
-  foreach (views_natural_sort_get_transformations($index_entry) as $transformation_method) {
-    $string = $transformation_method($string);
+  foreach (views_natural_sort_get_transformations($index_entry) as $weight => $transformation_method) {
+    if (is_callable($transformation_method)) {
+      $string = call_user_func($transformation_method, $string, $original_string, $weight);
+    }
+    else {
+      watchdog(
+        'views_natural_sort',
+        '@method is not a valid callable entity',
+        array('@method' => $transformation_method),
+        WATCHDOG_ERROR
+      );
+    }
   }
 
   return $string;
