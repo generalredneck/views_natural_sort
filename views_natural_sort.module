@@ -64,6 +64,7 @@ function views_natural_sort_store_multiple(array $index_entries) {
 }
 function views_natural_sort_store($index_entry) {
   //This should take a formatted object and store it into the views_natural_sort table.
+  $string = 
   return db_merge('views_natural_sort')
     ->key(array(
       'eid' => $index_entry['eid'],
@@ -130,7 +131,10 @@ function views_natural_sort_encode($index_entry) {
     $string = $transformation_method($string);
   }
 
-  return $string;
+  // The size limit on the content field for views_natual_sort is sometimes not
+  // enough. Lets truncate all data down to that size. I personally feel the
+  // inaccuracy is an acceptable loss.
+  return substr($string, 0, 255);
 }
 
 function views_natural_sort_get_transformations($index_entry) {
