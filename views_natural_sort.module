@@ -203,7 +203,12 @@ function views_natural_sort_encode($string) {
   // without utf8_encoding. This has been known to make Mysql vomit, so encoding
   // here. This isn't seen anywhere else in drupal though.
   // @see http://drupal.org/node/1914098
-  return utf8_encode($string);
+  $string = utf8_encode($string);
+
+  // The size limit on the content field for views_natual_sort is sometimes not
+  // enough. Lets truncate all data down to that size. I personally feel the
+  // inaccuracy is an acceptable loss.
+  return substr($string, 0, 255);
 }
 
 /**
