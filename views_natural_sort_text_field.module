@@ -110,7 +110,7 @@ function _views_natural_sort_text_field_to_vns($entity_type, $entity, $field) {
 
   //TODO: add support for Field Language
   $entries = array();
-  $field_items = field_get_items($entity_type, $entity, $field_name) 
+  $field_items = field_get_items($entity_type, $entity, $field_name);
   if (!empty($field_items)) {
     foreach($field_items as $delta => $row) {
       $entries[] = array(
