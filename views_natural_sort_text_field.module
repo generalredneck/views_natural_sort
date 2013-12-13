@@ -94,7 +94,7 @@ function views_natural_sort_text_field_get_configured_fields(){
     if ($field['module'] == 'text' &&
       $field['storage']['type'] == 'field_sql_storage' &&
       $field['columns']['value']['type'] == 'varchar' &&
-      $field['views_natural_sort_enable_sort']) {
+      !empty($field['views_natural_sort_enable_sort'])) {
       $returned_fields[$field['id']] = $field;
     }
   }
