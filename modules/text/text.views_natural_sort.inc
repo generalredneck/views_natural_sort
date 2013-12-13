@@ -1,0 +1,117 @@
+<?php
+
+function text_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  //TODO: Inform the user that this field is being used in views.
+  $form['field']['views_natural_sort_enable_sort'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable natural sorting.'),
+    '#description' => t('Selecting this option will process and index this field\'s value for natural sorting in views.'),
+    '#default_value' => empty($form['#field']['views_natural_sort_enable_sort']) ? 0 : $form['#field']['views_natural_sort_enable_sort'],
+  );
+  $form['#submit'][] = 'text_form_field_ui_field_edit_form_alter_submit';
+}
+
+function text_form_field_ui_field_edit_form_alter_submit($form, $form_state) {
+  // Rebuild index for this field.
+  if($form_state['input']['field']['views_natural_sort_enable_sort'] != 1) {
+  //TODO: Revert views back to regular sort ASC & DESC.
+    db_delete('views_natural_sort')
+      ->condition('field', $form['#field']['field_name'])
+      ->execute();
+  }
+  else {
+    module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');
+    views_natural_sort_rebuild_index_batch_set(text_views_natural_sort_get_entry_types(array($form['#field'])));
+  }
+}
+
+function text_views_natural_sort_get_entry_types($fields = array()) {
+  if (empty($fields)) {
+    $fields = text_get_configured_fields();
+  }
+  $entry_types = array();
+  foreach($fields as $field) {
+    $entry_types += text_get_entry_types_from_field($field);
+  }
+  return $entry_types;
+}
+
+function text_get_entry_types_from_field($field) {
+  $entry_types = array();
+  foreach($field['bundles'] as $entity_type => $bundles) {
+    $entry_types[] = array(
+      'entity_type' => $entity_type,
+      'field' => $field['field_name'],
+    );
+  }
+  return $entry_types;
+}
+
+function text_views_natural_sort_get_rebuild_data($entry_type) {
+  if (!in_array($entry_type,text_views_natural_sort_get_entry_types())) {
+    return array();
+  }
+  $field = field_info_field($entry_type['field']);
+  $data = array();
+  $entities = entity_load($entry_type['entity_type']);
+  foreach ($entities as $entity) {
+    $entries = _text_to_vns($entry_type['entity_type'], $entity, $field);
+    if (!empty($entries)) {
+      $data += $entries;
+    }
+  }
+  return $data;
+}
+
+function text_field_attach_insert($entity_type, $entity) {
+  $configured_fields = text_get_configured_fields();
+  foreach ($configured_fields as $field) {
+    if (in_array($entity_type, array_keys($field['bundles']))){
+      _text_store($entity_type, $entity, $field);
+    }
+  }
+}
+
+function text_field_attach_update($entity_type, $entity) {
+  $configured_fields = views_natural_sort_text_field_get_configured_fields();
+  foreach ($configured_fields as $field) {
+    if (in_array($entity_type, array_keys($field['bundles']))){
+      _text_store($entity_type, $entity, $field);
+    }
+  }
+}
+
+function text_get_configured_fields(){
+  $all_fields = field_info_fields();
+  $returned_fields = array();
+  foreach($all_fields as $field_name => $field) {
+    if ($field['module'] == 'text' &&
+      $field['storage']['type'] == 'field_sql_storage' &&
+      $field['columns']['value']['type'] == 'varchar' &&
+      $field['views_natural_sort_enable_sort']) {
+      $returned_fields[$field['id']] = $field;
+    }
+  }
+  return $returned_fields;
+}
+function _text_store($entity_type, $entity, $field) {
+  views_natural_sort_store_multiple(_text_to_vns($entity_type, $entity, $field));
+}
+function _text_to_vns($entity_type, $entity, $field) {
+  $entity_info = entity_get_info($entity_type);
+  $entity_id_property = $entity_info['entity keys']['id'];
+  $field_name = $field['field_name'];
+
+  //TODO: add support for Field Language
+  $entries = array();
+  foreach(field_get_items($entity_type, $entity, $field_name) as $delta => $row) {
+    $entries[] = array(
+      'eid' => $entity->$entity_id_property,
+      'entity_type' => $entity_type,
+      'field' => $field_name,
+      'delta' => $delta,
+      'content' => $row['value']
+    );
+  }
+  return $entries;
+}
