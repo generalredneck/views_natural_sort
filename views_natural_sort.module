@@ -100,6 +100,21 @@ function views_natural_sort_views_api() {
   );
 }
 
+function views_natural_sort_views_data_alter(&$data) {
+  // Get all varchar fields from schema info
+  $schema_info = drupal_get_schema();
+  foreach($data as $table => $data) {
+    foreach($schema_info[$table]['fields'] as $field_name => $field_data) {
+      if ($field_data['type'] == 'varchar') {
+        // If it's varchar, lets figure out if views has information on it.
+        // If so, lets move the sort handler to a new key "vns_old_sort_handler"
+        // and put ours in it's place. The new sort handler will be sure to call
+        // will essentially extend old sort handler using __call magic.
+      }
+    }
+  }
+}
+
 /**
  * Encodes a string into an ascii-sortable such:
  *  - Leading articles in common languages are ingored: The A An El La Le Il
@@ -256,6 +271,13 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
     'field' => 'title',
   ));
 }
+function views_natural_sort_get_sortable_fields() {
+  module_load_include('inc', 'views', 'includes/cache');
+  $views_data
+  foreach(_views_fetch_data() as $table => $data) {
+
+  }
+}
 
 function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
   if($entry_type['entity_type'] != 'node' || $entry_type['field'] != 'title') {
@@ -269,73 +291,5 @@ function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
     $data[] = _views_natural_sort_node_to_vns($row);
   }
   return $data;
-}
-
-/**
- * Implements hook_node_insert().
- *
- * This keeps our natural sort index up to date.
- */
-function views_natural_sort_node_insert($node) {
-  _views_natural_sort_store_node($node);
-}
-
-/**
- * Implementation of hook_node_update().
- *
- * This keeps our natural sort index up to date.
- */
-function views_natural_sort_node_update($node) {
-  _views_natural_sort_store_node($node);
-}
-
-/**
- * Implementation of hook_node_delete().
- *
- * This keep sour natural sort index clean.
- */
-function views_natural_sort_node_delete($node) {
-  _views_natural_sort_remove_node($node);
-}
-
-/**
- * Helper function for writing node data to our sort index.
- *
- * @param $node
- * A drupal node object containing at least a nid and title.
- *
- * @return int
- * MergeQuery::STATUS_UPDATE or MergeQuery::STATUS_INSERT
- */
-function _views_natural_sort_store_node($node) {
-  views_natural_sort_store(_views_natural_sort_node_to_vns($node));
-}
-
-function _views_natural_sort_node_to_vns($node) {
-  return array(
-    'eid' => $node->nid,
-    'entity_type' => 'node',
-    'field' => 'title',
-    'delta' => 0,
-    'content' => $node->title,
-  );
-}
-
-/**
- * Helper function for removing node data from our sort index.
- *
- * @param $node
- * A drupal node object containing at least a nid.
- *
- * @return int
- * The number of rows deleted.
- */
-function _views_natural_sort_remove_node($node) {
-  return views_natural_sort_remove(array(
-    'eid' => $node->nid,
-    'entity_type' => 'node',
-    'field' => 'title',
-    'delta' => 0,
-  ));
 }
 
