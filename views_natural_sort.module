@@ -57,6 +57,15 @@ function views_natural_sort_menu() {
   return $items;
 }
 
+function views_natural_sort_module_implements_alter(&$implements, $hook) {
+  if ($hook == 'views_data_alter') {
+    // Make views natural sort always last so we get all the up to date info.
+    $group = $implements['views_natural_sort'];
+    unset($implements['views_natural_sort']);
+    $implements['views_natural_sort'] = $group;
+  }
+}
+
 function views_natural_sort_store_multiple(array $index_entries) {
   foreach($index_entries as $entry) {
     views_natural_sort_store($entry);
@@ -98,21 +107,6 @@ function views_natural_sort_views_api() {
   return array(
     'api' => 3.0,
   );
-}
-
-function views_natural_sort_views_data_alter(&$data) {
-  // Get all varchar fields from schema info
-  $schema_info = drupal_get_schema();
-  foreach($data as $table => $data) {
-    foreach($schema_info[$table]['fields'] as $field_name => $field_data) {
-      if ($field_data['type'] == 'varchar') {
-        // If it's varchar, lets figure out if views has information on it.
-        // If so, lets move the sort handler to a new key "vns_old_sort_handler"
-        // and put ours in it's place. The new sort handler will be sure to call
-        // will essentially extend old sort handler using __call magic.
-      }
-    }
-  }
 }
 
 /**
@@ -272,11 +266,41 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
   ));
 }
 function views_natural_sort_get_sortable_fields() {
-  module_load_include('inc', 'views', 'includes/cache');
-  $views_data
-  foreach(_views_fetch_data() as $table => $data) {
-
+  $fields = &drupal_static(__FUNCTION__, array());
+  if (empty($fields)) {
+    module_load_include('inc', 'views', 'includes/cache');
+    $data = _views_fetch_data();
+    $schema_info = drupal_get_schema();
+    foreach($data as $table => $views_table_data) {
+      if (!empty($views_table_data['moved to']) || empty($schema_info[$table]) || empty($schema_info[$table]['fields'])) {
+        continue;
+      }
+      foreach($schema_info[$table]['fields'] as $field_name => $field_data) {
+        if ($field_data['type'] == 'varchar' && !empty($views_table_data[$field_name]) &&
+          !empty($views_table_data[$field_name]['sort']) && !empty($views_table_data[$field_name]['sort']['handler']) &&
+          $views_table_data[$field_name]['sort']['handler'] == 'views_handler_sort') {
+          $data[$table][] = $field_name;
+        }
+      }
+    }
   }
+  return $fields;
+}
+
+function views_naturla_sort_get_entities() {
+  $sortable_fields = views_natural_sort_get_sortable_fields();
+  $entity_info = entity_get_info();
+  $entities = array();
+  foreach($entity_info as $entity_name => $info) {
+    if (!empty($sortable_fields[$info['base_table']])) {
+      $entities[$entity_name][$info['base_table']] = $sortable_fields[$info['base_table']];
+    }
+  }
+  // figure out how revisions will be handled.
+  // Next Steps: Add a hook on entity save for each of the fields that aren't real fields
+  // Also limit the views _natural_sort handler to just entities. Screw the other tables.
+  // Add the implementation for the text fields data to views_data_alter.
+  // see about moving information around to their own tables... one for each entity and additional cololumn on each field table.
 }
 
 function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){

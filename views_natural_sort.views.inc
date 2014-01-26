@@ -8,6 +8,12 @@
  */
 
 function views_natural_sort_views_data_alter(&$data) {
-  $data['node']['title']['sort']['handler'] = 'views_natural_sort_handler_sort';
+  // Get all varchar fields from schema info
+  $sortable_fields = views_natural_sort_get_sortable_fields();
+  foreach ($sortable_fields as $table => $fields) {
+    foreach($fields as $field) {
+      $data[$table][$field]['sort']['handler'] = 'views_natural_sort_handler_sort';
+    }
+  }
 }
 
