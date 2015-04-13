@@ -57,14 +57,111 @@ function views_natural_sort_menu() {
   return $items;
 }
 
+/**
+ * Implementation of hook_views_api().
+ */
+function views_natural_sort_views_api() {
+  return array(
+    'api' => 3.0,
+  );
+}
+
+/**
+ * Implements hook_views_natural_sort_get_entry_types().
+ */
+function views_natural_sort_views_natural_sort_get_entry_types() {
+  return array(array(
+    'entity_type' => 'node',
+    'field' => 'title',
+  ));
+}
+
+/**
+ * Implements hook_views_natural_sort_get_rebuild_data();
+ */
+function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
+  if($entry_type['entity_type'] != 'node' || $entry_type['field'] != 'title') {
+    return array();
+  }
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.node');
+  $result = db_select('node', 'n')
+    ->fields('n', array('nid', 'title'))
+    ->execute();
+  $data = array();
+  foreach ($result as $row ) {
+    $data[] = _views_natural_sort_node_to_vns($row);
+  }
+  return $data;
+}
+
+/**
+ * Implements hook_node_insert().
+ *
+ * This keeps our natural sort index up to date.
+ */
+function views_natural_sort_node_insert($node) {
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.node');
+  _views_natural_sort_store_node($node);
+}
+
+/**
+ * Implementation of hook_node_update().
+ *
+ * This keeps our natural sort index up to date.
+ */
+function views_natural_sort_node_update($node) {
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.node');
+  _views_natural_sort_store_node($node);
+}
+
+/**
+ * Implementation of hook_node_delete().
+ *
+ * This keep sour natural sort index clean.
+ */
+function views_natural_sort_node_delete($node) {
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.node');
+  _views_natural_sort_remove_node($node);
+}
+
+/**
+ * Store Multiple views_natural_sort entries
+ *
+ * @param array $index_entries
+ *   An array of entries to store in the views_natural_sort table.
+ *
+ * @see views_natural_sort_store
+ */
 function views_natural_sort_store_multiple(array $index_entries) {
   foreach($index_entries as $entry) {
     views_natural_sort_store($entry);
   }
 }
-function views_natural_sort_store($index_entry) {
+
+/**
+ * Save an entry to the database that represents a views_natural_sort index
+ *
+ * @param array $index_entry
+ *   Mirrors the views_natural_sort table
+ *     $eid - Entity Id of the item referenced
+ *     $entity_type - The Entity Type. Ex. node
+ *     $field - reference to the property or field name
+ *     $delta - the item number in that field or property
+ *     $content - The transformed data that a field will
+ *                be sorted by.
+ */
+
+function views_natural_sort_store(array $index_entry) {
   //This should take a formatted object and store it into the views_natural_sort table.
-  $string = views_natural_sort_encode($index_entry);
+  $string = views_natural_sort_transform($index_entry);
+
+  // The size limit on the content field for views_natual_sort is sometimes not
+  // enough. Lets truncate all data down to that size. I personally feel the
+  // inaccuracy is an acceptable loss, as the bigger the string gets, the less
+  // permanent the sort.
+  //
+  // TODO: Have this pick up off of the schema so if someone does a
+  // hook_schema_alter() on me.
   return db_merge('views_natural_sort')
     ->key(array(
       'eid' => $index_entry['eid'],
@@ -82,6 +179,16 @@ function views_natural_sort_store($index_entry) {
     ->execute();
 }
 
+/**
+ * Remove a views_natural_sort index entry based on keys
+ *
+ * @param array $index_entry
+ *   Mirrors the views_natural_sort table
+ *     $eid - Entity Id of the item referenced
+ *     $entity_type - The Entity Type. Ex. node
+ *     $field - reference to the property or field name
+ *     $delta - the item number in that field or property
+ */
 function views_natural_sort_remove($index_entry) {
   //TODO: Make sure all the keys are in the index_entry.
   return db_delete('views_natural_sort')
@@ -93,50 +200,45 @@ function views_natural_sort_remove($index_entry) {
 }
 
 /**
- * Implementation of hook_views_api().
- */
-function views_natural_sort_views_api() {
-  return array(
-    'api' => 3.0,
-  );
-}
-
-/**
- * Encodes a string into an ascii-sortable such:
+ * Encodes a string into an ascii-sortable string such as:
  *  - Leading articles in common languages are ingored: The A An El La Le Il
  *  - Unimportant punctuation is ignored: # ' " ( )
  *  - Unimportant words are ignored: and of or
- *  - Embeded numbers will sort in numerical order. The following possiblities
- *    are supported
- *    - A leading dash indicates a negative number, unless it is preceded by a
- *      non-whitespace character, which case it is considered just a dash.
- *    - Leading zeros are properly ignored so as to not influence sort order
- *    - Decimal numbers are supported using a period as the decimal character
- *    - Thousands separates are ignored, using the comma as the thous. character
- *    - Numbers may be up to 99 digits before the decimal, up to the precision
- *      of the processor.
  *
- * @param $string string
- *   The string to be encoded
+ * @param array $index_entry
+ *   Mirrors the views_natural_sort table
+ *     $eid - Entity Id of the item referenced
+ *     $entity_type - The Entity Type. Ex. node
+ *     $field - reference to the property or field name
+ *     $delta - the item number in that field or property
  *
  * @return string
- *   The encoded string
+ *   The transformed string
  */
-function views_natural_sort_encode($index_entry) {
-
+function views_natural_sort_transform($index_entry) {
   // Get copy the original string.
   $string = $index_entry['content'];
-
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort');
   foreach (views_natural_sort_get_transformations($index_entry) as $transformation_method) {
     $string = $transformation_method($string);
   }
-
-  // The size limit on the content field for views_natual_sort is sometimes not
-  // enough. Lets truncate all data down to that size. I personally feel the
-  // inaccuracy is an acceptable loss.
   return $string;
 }
 
+/**
+ * Get the full list of transformations to run when saving a natural sort entry.
+ * @param array $index_entry
+ *   The original entry to be written to the views_natural_sort table.
+ *     $eid - Entity Id of the item referenced
+ *     $entity_type - The Entity Type. Ex. node
+ *     $field - reference to the property or field name
+ *     $delta - the item number in that field or property
+ *     $content - The transformed data that a field will
+ *                be sorted by.
+ *
+ * @return array
+ *   The final list of transformations.
+ */
 function views_natural_sort_get_transformations($index_entry) {
   $transformations = array(
     'views_natural_sort_remove_beginning_words',
@@ -144,192 +246,7 @@ function views_natural_sort_get_transformations($index_entry) {
     'views_natural_sort_remove_symbols',
     'views_natural_sort_numbers',
   );
-
   //Allow other modules to modify the transformation that happens here if needed.
-  drupal_alter('views_ntural_sort_transformations', $transformations, $index_entry);
-
+  drupal_alter('views_natural_sort_transformations', $transformations, $index_entry);
   return $transformations;
 }
-
-function views_natural_sort_remove_beginning_words($string) {
-  $beginning_words = variable_get('views_natural_sort_beginning_words_remove', array());
-  if (empty($beginning_words)) {
-    return $string;
-  }
-
-  array_walk($beginning_words, 'preg_quote');
-  return preg_replace(
-    '/^(' . implode('|', $beginning_words) . ')\s+/i',
-    '',
-    $string
-  );
-}
-
-function views_natural_sort_remove_words($string) {
-  $words = variable_get('views_natural_sort_words_remove', array());
-  if (empty($words)) {
-    return $string;
-  }
-
-  array_walk($words, 'preg_quote');
-  return preg_replace(
-    array(
-      '/\s(' . implode('|', $words) . ')\s+/i',
-      '/^(' . implode('|', $words) . ')\s+/i',
-    ),
-    array(
-      ' ',
-      ''
-    ),
-    $string
-  );
-}
-
-function views_natural_sort_remove_symbols($string) {
-  $symbols = variable_get('views_natural_sort_symbols_remove', '');
-  if (strlen($symbols) == 0) {
-    return $string;
-  }
-  return preg_replace(
-    '/[' . preg_quote($symbols) . ']/',
-    '',
-    $string
-  );
-}
-
-function views_natural_sort_numbers($string) {
-  // Find an optional leading dash (either preceded by whitespace or the first character) followed
-  // by either:
-  //   - an optional series of digits (with optional imbedded commas), then a period, then an optional series of digits OR
-  //   - a series of digits (with optional imbedded commas)
-  return preg_replace_callback(
-    '/(\s-|^-)?(?:(\d[\d,]*)?\.(\d+)|(\d[\d,]*))/',
-    '_views_natural_sort_number_encode_match_callback',
-    $string
-  );
-}
-
-/**
- * Encodes a string representing numbers into a special format that can be sorted alphanumerically.
- *
- * @param array $match
- *   array of matches passed from preg_replace_callback
- *   $match[0] is the entire matching string
- *   $match[1] if present, is the optional dash, preceded by optional whitespace
- *   $match[2] if present, is whole number portion of the decimal number
- *   $match[3] if present, is the fractional portion of the decimal number
- *   $match[4] if present, is the integer (when no fraction is matched)
- *
- * @return string
- *   String representing a numerical value that will sort numerically in an
- *   alphanumeric search.
- */
-function _views_natural_sort_number_encode_match_callback($match) {
-
-  // Remove commas and leading zeros from whole number
-  $whole = (string)(int)str_replace(',', '', (isset($match[4]) && strlen($match[4]) > 0) ? $match[4] : $match[2]);
-  // Remove traililng 0's from fraction, then add the decimal and one trailing 0
-  $fraction = trim('.' . $match[3], '0') . '0';
-  $encode = sprintf('%02u', strlen($whole)) . $whole . $fraction;
-  if (strlen($match[1])) {
-    // Negative number. Make 10's complement. Put back any leading white space and the dash
-    // Requires intermediate to avoid double-replacing the same digit. str_replace seems to
-    // work by copying the source to the result, then successively replacing within it,
-    // rather than replacing from the source to the result.
-    $digits       = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
-    $intermediate = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j');
-    $rev_digits   = array('9', '8', '7', '6', '5', '4', '3', '2', '1', '0');
-    $encode = $match[1] . str_replace($intermediate, $rev_digits, str_replace($digits, $intermediate, $encode));
-  }
-  return $encode;
-}
-
-function views_natural_sort_views_natural_sort_get_entry_types() {
-  return array(array(
-    'entity_type' => 'node',
-    'field' => 'title',
-  ));
-}
-
-function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
-  if($entry_type['entity_type'] != 'node' || $entry_type['field'] != 'title') {
-    return array();
-  }
-  $result = db_select('node', 'n')
-    ->fields('n', array('nid', 'title'))
-    ->execute();
-  $data = array();
-  foreach ($result as $row ) {
-    $data[] = _views_natural_sort_node_to_vns($row);
-  }
-  return $data;
-}
-
-/**
- * Implements hook_node_insert().
- *
- * This keeps our natural sort index up to date.
- */
-function views_natural_sort_node_insert($node) {
-  _views_natural_sort_store_node($node);
-}
-
-/**
- * Implementation of hook_node_update().
- *
- * This keeps our natural sort index up to date.
- */
-function views_natural_sort_node_update($node) {
-  _views_natural_sort_store_node($node);
-}
-
-/**
- * Implementation of hook_node_delete().
- *
- * This keep sour natural sort index clean.
- */
-function views_natural_sort_node_delete($node) {
-  _views_natural_sort_remove_node($node);
-}
-
-/**
- * Helper function for writing node data to our sort index.
- *
- * @param $node
- * A drupal node object containing at least a nid and title.
- *
- * @return int
- * MergeQuery::STATUS_UPDATE or MergeQuery::STATUS_INSERT
- */
-function _views_natural_sort_store_node($node) {
-  views_natural_sort_store(_views_natural_sort_node_to_vns($node));
-}
-
-function _views_natural_sort_node_to_vns($node) {
-  return array(
-    'eid' => $node->nid,
-    'entity_type' => 'node',
-    'field' => 'title',
-    'delta' => 0,
-    'content' => $node->title,
-  );
-}
-
-/**
- * Helper function for removing node data from our sort index.
- *
- * @param $node
- * A drupal node object containing at least a nid.
- *
- * @return int
- * The number of rows deleted.
- */
-function _views_natural_sort_remove_node($node) {
-  return views_natural_sort_remove(array(
-    'eid' => $node->nid,
-    'entity_type' => 'node',
-    'field' => 'title',
-    'delta' => 0,
-  ));
-}
-
