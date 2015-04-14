@@ -1,58 +1,54 @@
 <?php
 
-class ViewsNaturalSortTest extends DrupalUnitTestCase {
+class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'Views Natural Sort Tests',
-      'description' => 'Test that Views Natural Sort Module works correctly.',
-      'group' => 'VNS',
+      'name' => 'Views Natural Sort Days of the Week',
+      'description' => 'Tests Days of the Week Sorting',
+      'group' => 'Views Natural Sort',
     );
   }
-  
-  public function testNodeAdd(){
-    $node = new StdClass();
-    $node->type = 'article';
-    node_object_prepare($node);
-    $node->title = 'All American';
-    $node->status = 1;
-    node_save($node);
-    $this->assertNotNull($node->nid, 'The test node did not save properly.');
-    $vns_entry = db_select('views_natural_sort','vns')
-      ->fields('vns')
-      ->condition('eid', $node->nid)
-      ->execute()
-      ->fetchAssoc();
-    $this->assertEqual($vns_entry, array(
-      'eid' => $node->nid,
-      'entity_type' => 'node',
-      'field' => 'title',
-      'delta' => '0',
-      'content' => 'All American'
-    ));
-  }
-  
-  public function testNodeRemove(){
-    $this->assertTrue(FALSE);
+
+  function testDefaultDayReplace() {
+    variable_set('views_natural_sort_days_of_the_week_enabled', TRUE);
+    foreach(views_natural_sort_days_of_the_week_get_default_days() as $replaced => $day) {
+      $this->assertEqual(views_natural_sort_days_of_the_week_sort_days($day), $replaced);
+    }
   }
 
-  public function testNodeChange(){
-    $this->assertTrue(FALSE);
+  function testFirstDayMonday() {
+    variable_set('views_natural_sort_days_of_the_week_enabled', TRUE);
+    $variable_original = variable_get("views_natural_sort_days_of_the_week_first_day_en", "Sunday");
+    variable_set("views_natural_sort_days_of_the_week_first_day_en", "Monday");
+    db_set_active("default");
+    $expected = array(
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    );
+    foreach($expected as $replaced => $day) {
+      $this->assertEqual(views_natural_sort_days_of_the_week_sort_days($day), $replaced);
+    }
+    variable_set("views_natural_sort_days_of_the_week_first_day_en", $variable_original);
   }
-
-  public function testRemoveBeginningWordsTransformation(){
-    $this->assertTrue(FALSE);
-  }
-
-  public function testRemoveWordsTransformation(){
-    $this->assertTrue(FALSE);
-  }
-
-  public function testNumberTransfomration(){
-    $this->assertTrue(FALSE);
-  }
-
-  public function testViewSort(){
-    $this->assertTrue(FALSE);
+  function testAbbreviations() {
+    variable_set('views_natural_sort_days_of_the_week_enabled', TRUE);
+    $expected = array(
+      "Sun",
+      "Mon.",
+      "Tues",
+      "Wed",
+      "Thur",
+      "Fri.",
+      "Sat",
+    );
+    foreach($expected as $replaced => $day) {
+      $this->assertEqual(views_natural_sort_days_of_the_week_sort_days($day), $replaced);
+    }
   }
 }

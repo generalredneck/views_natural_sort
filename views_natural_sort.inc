@@ -107,3 +107,73 @@ function _views_natural_sort_number_transform_match_callback($match) {
   }
   return $encode;
 }
+
+/**
+ * Simply convert days of the week over to numbers.
+ *
+ * This "should" be multilingual safe.
+ */
+function views_natural_sort_days_of_the_week_sort_days($string) {
+
+  global $language;
+
+  // Adding a configuration so that in the future an admin page can be made
+  // to switch which day is the first day of the week based on local.
+  $used_language = isset($language->language) ? $language->language : 'en';
+  $first_day = variable_get('views_natural_sort_days_of_the_week_first_day_' . $used_language, "Sunday");
+
+  $day_list = views_natural_sort_days_of_the_week_get_default_days();
+  $sorted_days = $day_list;
+  // Go through list and resort it and Translate it.
+  $start = array_search($first_day, $day_list);
+  for ($i=0; $i<7; $i++) {
+    $current_day = ($i+$start)%7;
+    $abbreviations = views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($day_list[$current_day], $used_language);
+    $translated_day = t($day_list[$current_day]);
+    $string = preg_replace(
+      array(
+        '/\b' . $translated_day . '\b/i',
+        '/\b(' . implode(views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($day_list[$current_day]), '\.?|') . ')\b/i'
+      ),
+      ' ' . $i .' ',
+      $string
+    );
+  }
+  return $string;
+}
+
+function views_natural_sort_days_of_the_week_get_default_days() {
+  return array (
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday"
+  );
+}
+
+function views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($day, $lang = 'en') {
+  $default_days = views_natural_sort_days_of_the_week_get_default_days();
+  $index = array_search($day,$default_days);
+  $default_abbrev = views_natural_sort_days_of_the_week_get_default_day_abbreviations();
+  return variable_get(
+    'views_natural_sort_days_of_the_week_' . $lang . '_' . $day,
+    $default_abbrev[$index]
+  );
+}
+
+function views_natural_sort_days_of_the_week_get_default_day_abbreviations() {
+  return array (
+    array("Sun"),
+    array("Mon"),
+    array("Tu", "Tue", "Tues"),
+    array("Wed"),
+    array("Th", "Thu", "Thur", "Thurs"),
+    array("Fri"),
+    array("Sat"),
+  );
+}
+
+

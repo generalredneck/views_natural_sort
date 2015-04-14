@@ -50,7 +50,12 @@ function views_natural_sort_settings_form() {
     '#default_value' => variable_get('views_natural_sort_symbols_remove', ''),
     '#description' => t('Most symbols are ignored when performing a sort naturally. Those symbols you want ignored go here. Do not use a separator. EX: &$".'),
   );
-
+  $form['days_of_the_week_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => 'Sort days of the week and their abbreviations',
+    '#description' => "Checking this setting will allow sorting of days of the week in their proper order starting with the day of the week that is configurable by you and for each language.",
+    '#efault_value' => variable_get('views_natural_sort_days_of_the_week_enabled', FALSE),
+  );
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Save Settings'),
@@ -72,6 +77,7 @@ function views_natural_sort_settings_form_submit($form, &$form_state) {
   variable_set('views_natural_sort_beginning_words_remove', $beginning_words);
   variable_set('views_natural_sort_words_remove', $words);
   variable_set('views_natural_sort_symbols_remove', $symbols);
+  variable_set('views_natural_sort_days_of_the_week_enabled', $form_state['values']['days_of_the_week_enabled']);
 
   views_natural_sort_rebuild_index_submit();
 }

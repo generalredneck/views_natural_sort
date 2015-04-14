@@ -44,8 +44,8 @@ function views_natural_sort_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/config/views_natural_sort/settings'] = array(
-    'title' => 'Configure Word Removal Lists',
-    'description' => 'Set what words should be ignored when performing a natural sort.',
+    'title' => 'Configure Natural Sort Settings',
+    'description' => 'Set the settings for how particular transformations should behave.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('views_natural_sort_settings_form'),
     'access callback' => 'user_access',
@@ -246,7 +246,12 @@ function views_natural_sort_get_transformations($index_entry) {
     'views_natural_sort_remove_symbols',
     'views_natural_sort_numbers',
   );
-  //Allow other modules to modify the transformation that happens here if needed.
+
+  if (variable_get('views_natural_sort_days_of_the_week_enabled', FALSE)) {
+    $transformations[] = "views_natural_sort_days_of_the_week_sort_days";
+  }
+  // Allow other modules to modify the transformation that happens here if
+  // needed.
   drupal_alter('views_natural_sort_transformations', $transformations, $index_entry);
   return $transformations;
 }
