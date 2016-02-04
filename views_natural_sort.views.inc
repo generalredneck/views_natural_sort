@@ -33,4 +33,3 @@ function views_natural_sort_views_data_alter(&$views_data) {
     }
   }
 }
-

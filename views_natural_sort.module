@@ -65,6 +65,14 @@ function views_natural_sort_views_api() {
     'api' => 3.0,
   );
 }
+function views_natural_sort_module_implements_alter(&$implements, $hook) {
+  if ($hook == 'views_data_alter') {
+    // Make views natural sort always last so we get all the up to date info.
+    $group = $implements['views_natural_sort'];
+    unset($implements['views_natural_sort']);
+    $implements['views_natural_sort'] = $group;
+  }
+}
 
 /**
  * Implements hook_views_natural_sort_get_entry_types().
