@@ -70,10 +70,44 @@ function views_natural_sort_views_api() {
  * Implements hook_views_natural_sort_get_entry_types().
  */
 function views_natural_sort_views_natural_sort_get_entry_types() {
-  return array(array(
-    'entity_type' => 'node',
-    'field' => 'title',
-  ));
+  $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+  $entry_types = array();
+  foreach ($supported_entity_properties as $entity_type => $properties) {
+    foreach ($properties as $property => $schema_info) {
+      $entry_types[] = array(
+        'entity_type' => $entity_type,
+        'field' => $property,
+      );
+    }
+  }
+  return $entry_types;
+}
+
+function views_natural_sort_get_supported_entity_properties() {
+  $entity_property_info = entity_get_property_info();
+  $entity_info = entity_get_info();
+  $supported_properties = array();
+  foreach ($entity_property_info as $entity_type => $info) {
+    if (empty($supported_properties[$entity_type])) {
+      $supported_properties[$entity_type] = array();
+    }
+    $properties = $info['properties'];
+    foreach($properties as $property => $property_info) {
+      $property_info = array_merge($property_info, entity_property_info_defaults());
+      if ($property_info['type'] != 'text' || empty($property_info['schema field'])) {
+        continue;
+      }
+      $schema = drupal_get_schema($entity_info[$entity_type]['base table']);
+      if ($schema['fields'][$property_info['schema field']]['type'] != 'varchar') {
+        continue;
+      }
+      $supported_properties[$entity_type][$property] = array(
+        'base_table' => $entity_info[$entity_type]['base table'],
+        'schema_field' => $property_info['schema field'],
+      );
+    }
+  }
+  return $supported_properties;
 }
 
 /**
@@ -152,7 +186,7 @@ function views_natural_sort_store_multiple(array $index_entries) {
  */
 
 function views_natural_sort_store(array $index_entry) {
-  //This should take a formatted object and store it into the views_natural_sort table.
+  // This should take a formatted object and store it into the views_natural_sort table.
   $string = views_natural_sort_transform($index_entry);
 
   // The size limit on the content field for views_natual_sort is sometimes not
