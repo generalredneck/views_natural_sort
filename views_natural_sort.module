@@ -80,79 +80,65 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
   return $entry_types;
 }
 
-function views_natural_sort_get_supported_entity_properties() {
-  $entity_property_info = entity_get_property_info();
-  $entity_info = entity_get_info();
-  $supported_properties = array();
-  foreach ($entity_property_info as $entity_type => $info) {
-    if (empty($supported_properties[$entity_type])) {
-      $supported_properties[$entity_type] = array();
-    }
-    $properties = $info['properties'];
-    foreach($properties as $property => $property_info) {
-      $property_info = array_merge($property_info, entity_property_info_defaults());
-      if ($property_info['type'] != 'text' || empty($property_info['schema field'])) {
-        continue;
-      }
-      $schema = drupal_get_schema($entity_info[$entity_type]['base table']);
-      if ($schema['fields'][$property_info['schema field']]['type'] != 'varchar') {
-        continue;
-      }
-      $supported_properties[$entity_type][$property] = array(
-        'base_table' => $entity_info[$entity_type]['base table'],
-        'schema_field' => $property_info['schema field'],
-      );
-    }
-  }
-  return $supported_properties;
-}
-
 /**
  * Implements hook_views_natural_sort_get_rebuild_data();
  */
 function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
-  if($entry_type['entity_type'] != 'node' || $entry_type['field'] != 'title') {
+  $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+  if (empty($supported_entity_properties[$entry_type['entity_type']]) ||
+    empty($supported_entity_properties[$entry_type['entity_type']][$entry_type['field']])) {
     return array();
   }
-  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.node');
-  $result = db_select('node', 'n')
-    ->fields('n', array('nid', 'title'))
-    ->execute();
+  $entities = entity_load($entry_type['entity_type']);
   $data = array();
-  foreach ($result as $row ) {
-    $data[] = _views_natural_sort_node_to_vns($row);
+  foreach($entities as $eid => $entity) {
+    $data[] = array(
+      'eid' => $eid,
+      'entity_type' => $entry_type['entity_type'],
+      'field' => $entry_type['field'],
+      'delta' => 0,
+      'content' => $entity->$entry_type['field'],
+    );
   }
   return $data;
 }
 
 /**
- * Implements hook_node_insert().
+ * Implements hook_entity_insert().
  *
  * This keeps our natural sort index up to date.
  */
-function views_natural_sort_node_insert($node) {
-  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.node');
-  _views_natural_sort_store_node($node);
+function views_natural_sort_entity_insert($entity, $type) {
+  $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+  if (empty($supported_entity_properties[$type])) {
+    return;
+  }
+  foreach ($supported_entity_properties[$type] as $property => $property_info) {
+    views_natural_sort_store(views_natural_sort_entity_to_vns($entity, $type, $property));
+  }
 }
 
 /**
- * Implementation of hook_node_update().
+ * Implementation of hook_entity_update().
  *
  * This keeps our natural sort index up to date.
  */
-function views_natural_sort_node_update($node) {
-  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.node');
-  _views_natural_sort_store_node($node);
+function views_natural_sort_entity_update($entity, $type) {
+  views_natural_sort_entity_insert($entity, $type);
 }
 
 /**
- * Implementation of hook_node_delete().
+ * Implementation of hook_entity_delete().
  *
  * This keep sour natural sort index clean.
  */
-function views_natural_sort_node_delete($node) {
-  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.node');
-  _views_natural_sort_remove_node($node);
+function views_natural_sort_entity_delete($entity, $type) {
+  $entity_info = entity_get_info($entity_type);
+  $id_field = $entity_info['entity_keys']['id'];
+  views_natural_sort_remove($entry = array(
+    'eid' => $entity->$id_field,
+    'entity_type' => $type,
+  ));
 }
 
 /**
@@ -217,17 +203,22 @@ function views_natural_sort_store(array $index_entry) {
  *   Mirrors the views_natural_sort table
  *     $eid - Entity Id of the item referenced
  *     $entity_type - The Entity Type. Ex. node
- *     $field - reference to the property or field name
- *     $delta - the item number in that field or property
+ *     $field - (optional) reference to the property or field name
+ *     $delta - (optional)the item number in that field or property
+ *   If an optional parameter doesn't exist, this is treated as a wild care
+ *   delete
  */
 function views_natural_sort_remove($index_entry) {
-  //TODO: Make sure all the keys are in the index_entry.
-  return db_delete('views_natural_sort')
+  $query = db_delete('views_natural_sort')
     ->condition('eid', $index_entry['eid'])
-    ->condition('entity_type', $index_entry['entity_type'])
-    ->condition('field', $index_entry['field'])
-    ->condition('delta', $index_entry['delta'])
-    ->execute();
+    ->condition('entity_type', $index_entry['entity_type']);
+  if (isset($index_entry['field'])) {
+    $query->condition('field', $index_entry['field']);
+  }
+  if (isset($index_entry['delta'])) {
+    $query->condition('delta', $index_entry['delta']);
+  }
+  $query->execute();
 }
 
 /**
@@ -285,4 +276,50 @@ function views_natural_sort_get_transformations($index_entry) {
   // needed.
   drupal_alter('views_natural_sort_transformations', $transformations, $index_entry);
   return $transformations;
+}
+
+function views_natural_sort_get_supported_entity_properties() {
+  $supported_properties = &drupal_static(__FUNCTION__, array());
+  if (empty($supported_properties)) {
+    $entity_property_info = entity_get_property_info();
+    $entity_info = entity_get_info();
+    foreach ($entity_property_info as $entity_type => $info) {
+      if (empty($supported_properties[$entity_type])) {
+        $supported_properties[$entity_type] = array();
+      }
+      $properties = $info['properties'];
+      foreach($properties as $property => $property_info) {
+        $property_info = array_merge($property_info, entity_property_info_defaults());
+        if ($property_info['type'] != 'text' || empty($property_info['schema field'])) {
+          continue;
+        }
+        $schema = drupal_get_schema($entity_info[$entity_type]['base table']);
+        if ($schema['fields'][$property_info['schema field']]['type'] != 'varchar') {
+          continue;
+        }
+        $supported_properties[$entity_type][$property] = array(
+          'base_table' => $entity_info[$entity_type]['base table'],
+          'schema_field' => $property_info['schema field'],
+        );
+      }
+    }
+  }
+  return $supported_properties;
+}
+
+function views_natural_sort_entity_to_vns($entity, $entity_type, $field) {
+  $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+  if (empty($supported_entity_properties[$entity_type]) ||
+    empty($supported_entity_properties[$entity_type][$field])) {
+    throw new Exception("$entity_type -> $field doesn't exist. Cannot create Views Natural Sort record");
+  }
+  $entity_info = entity_get_info($entity_type);
+  $id_field = $entity_info['entity keys']['id'];
+  return array(
+    'eid' => $entity->$id_field,
+    'entity_type' => $entity_type,
+    'field' => $field,
+    'delta' => 0,
+    'content' => $entity->$field,
+  );
 }
