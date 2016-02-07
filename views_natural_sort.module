@@ -278,6 +278,52 @@ function views_natural_sort_get_transformations($index_entry) {
   return $transformations;
 }
 
+/**
+ * Retrieve the full list of entities and properties that can be supported.
+ *
+ * @return array
+ *  An array of property information keyed by entity machine name. Example:
+ *  array (
+ *    'node' => array (
+ *      'type' => array (
+ *        'base_table' => 'node',
+ *        'schema_field' => 'type',
+ *      ),
+ *      'title' => array (
+ *        'base_table' => 'node',
+ *        'schema_field' => 'title',
+ *      ),
+ *      'language' => array (
+ *        'base_table' => 'node',
+ *        'schema_field' => 'language',
+ *      ),
+ *    ),
+ *    'user' => array (
+ *      'name' => array (
+ *        'base_table' => 'users',
+ *        'schema_field' => 'name',
+ *      ),
+ *      'mail' => array (
+ *        'base_table' => 'users',
+ *        'schema_field' => 'mail',
+ *      ),
+ *      'theme' => array (
+ *        'base_table' => 'users',
+ *        'schema_field' => 'theme',
+ *      ),
+ *    ),
+ *    'file' => array (
+ *      'name' => array (
+ *        'base_table' => 'file_managed',
+ *        'schema_field' => 'filename',
+ *      ),
+ *      'mime' => array (
+ *        'base_table' => 'file_managed',
+ *        'schema_field' => 'filemime',
+ *      ),
+ *    ),
+ *  )
+ */
 function views_natural_sort_get_supported_entity_properties() {
   $supported_properties = &drupal_static(__FUNCTION__, array());
   if (empty($supported_properties)) {
@@ -307,6 +353,16 @@ function views_natural_sort_get_supported_entity_properties() {
   return $supported_properties;
 }
 
+/**
+ * A helper function for creating a VNS record for storage.
+ *
+ * @param stdClass $entity
+ * @param string $entity_type
+ * @param string $field
+ *
+ * @return array
+ *   An array that represents the VNS table row to be inserted.
+ */
 function views_natural_sort_entity_to_vns($entity, $entity_type, $field) {
   $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
   if (empty($supported_entity_properties[$entity_type]) ||

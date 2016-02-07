@@ -4,6 +4,9 @@
  * Callbacks for managing Views Natural Sort.
  */
 
+/**
+ * Views Natural Sort Admin Settings Page callback.
+ */
 function views_natural_sort_settings_page() {
   $content = array(
     'settings' => drupal_get_form('views_natural_sort_settings_form'),
