@@ -141,18 +141,14 @@ function views_natural_sort_rebuild_index($entry_type, &$context) {
   // Alias sandbox for easier referencing.
   $sandbox = &$context['sandbox'];
 
-  // Hook for modules to implement and return data that views_natural_sort can
-  // store as an index for that module's entries.
-  $index_entries = module_invoke_all('views_natural_sort_get_rebuild_data', $entry_type);
-
-  //TODO: this seems like it has the possiblity to produce unused data.
-  // Consider a delete of some sort.
-
   // Initialize our context.
   if (!isset($sandbox['max'])) {
+    // Hook for modules to implement and return data that views_natural_sort can
+    // store as an index for that module's entries.
+    $sandbox['entries'] = module_invoke_all('views_natural_sort_get_rebuild_data', $entry_type);
     $sandbox['progress'] = 0;
-    $sandbox['max'] = count($index_entries) - 1;
-    $sandbox['total'] = count($index_entries);
+    $sandbox['max'] = count($sandbox['entries']) - 1;
+    $sandbox['total'] = count($sandbox['entries']);
 
     $sandbox['current'] = 0;
 
@@ -162,7 +158,7 @@ function views_natural_sort_rebuild_index($entry_type, &$context) {
     }
   }
 
-  $results = array_slice($index_entries, $sandbox['current'], variable_get('views_natural_sort_rebuild_items_per_batch', '500'));
+  $results = array_slice($sandbox['entries'], $sandbox['current'], variable_get('views_natural_sort_rebuild_items_per_batch', '500'));
 
   $entity_type = '';
   $field = '';
