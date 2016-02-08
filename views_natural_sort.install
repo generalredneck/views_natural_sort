@@ -79,6 +79,8 @@ function views_natural_sort_install() {
     )
   );
   variable_set('views_natural_sort_symbols_remove', "#\"'\\()[]");
+  variable_set('views_natural_sort_days_of_the_week_enabled', FALSE);
+  variable_set('views_natural_sort_rebuild_items_per_batch', 500);
 }
 
 /**
@@ -153,5 +155,6 @@ function views_natural_sort_update_7200() {
       'primary key' => array('eid', 'entity_type', 'field', 'delta'),
     )
   );
+  module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');
   views_natural_sort_rebuild_index_submit();
 }
