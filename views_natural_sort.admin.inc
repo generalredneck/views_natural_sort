@@ -80,6 +80,7 @@ function views_natural_sort_settings_form() {
     '#title' => 'Items per Batch',
     '#default_value' => variable_get('views_natural_sort_rebuild_items_per_batch', '500'),
     '#description' => t('The number of items a batch process will work through at a given time. Raising this number will make the batch go quicker, however, raising it too high can cause timeouts and/or memory limit errors.'),
+    '#element_validate' => array('element_validate_integer_positive'),
   );
   $form['save'] = array(
     '#type' => 'submit',
@@ -161,7 +162,7 @@ function views_natural_sort_rebuild_index($entry_type, &$context) {
     }
   }
 
-  $results = array_slice($index_entries, $sandbox['current'], 500);
+  $results = array_slice($index_entries, $sandbox['current'], variable_get('views_natural_sort_rebuild_items_per_batch', '500'));
 
   $entity_type = '';
   $field = '';
