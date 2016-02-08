@@ -96,6 +96,8 @@ function views_natural_sort_uninstall() {
   variable_del('views_natural_sort_beginning_words_remove');
   variable_del('views_natural_sort_words_remove');
   variable_del('views_natural_sort_symbols_remove');
+  variable_del('views_natural_sort_days_of_the_week_enabled');
+  variable_del('views_natural_sort_rebuild_items_per_batch');
 }
 
 /**
@@ -151,4 +153,5 @@ function views_natural_sort_update_7200() {
       'primary key' => array('eid', 'entity_type', 'field', 'delta'),
     )
   );
+  views_natural_sort_rebuild_index_submit();
 }
