@@ -354,6 +354,37 @@ function views_natural_sort_get_supported_entity_properties() {
 }
 
 /**
+ * Returns a list of properties that we know views will allow us to alter.
+ *
+ * This isn't used yet.
+ *
+ * @return mixed
+ *   Returns an array formatted as views_natural_sort_get_supported_entity_properties
+ *   or FALSE when views hasn't initianalized yet.
+ *
+ * @see views_natural_sort_get_views_configurable_properties
+ */
+function views_natural_sort_get_views_configurable_properties() {
+  $views_configurable_properties = &drupal_static(__FUNCTION__, array());
+  if (empty($supported_properties)) {
+    $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+    $views_data = views_fetch_data();
+    if (empty($views_data)) {
+      return FALSE;
+    }
+    foreach($supported_entity_properties as $entity => $properties) {
+      foreach($properties as $property => $schema_info) {
+        if (empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]) ||
+          empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']) ||
+          empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler']) ||
+          !in_array($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler'], array('views_natural_sort_handler_sort', 'views_handler_sort'))) {
+      }
+    }
+  }
+  return $views_configurable_properties;
+}
+
+/**
  * A helper function for creating a VNS record for storage.
  *
  * @param stdClass $entity
