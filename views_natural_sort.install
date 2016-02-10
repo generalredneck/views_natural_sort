@@ -158,3 +158,26 @@ function views_natural_sort_update_7200() {
   module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');
   views_natural_sort_rebuild_index_submit();
 }
+
+/**
+ * Upgrading 1.x VNS views to 2.x VNS views.
+ */
+function views_natural_sort_update_7201() {
+  foreach($views as $view_name => $view) {
+    foreach ($view->display as &$display) {
+      if (!empty($display->display_options['sorts'])) {
+        foreach ($display->display_options['sorts'] as &$sort) {
+          if ($sort['table'] == 'views_natural_sort') {
+            $sort['table'] = 'node';
+            $sort['field'] = 'title';
+            $sort['order'] = 'N' . $sort['order'];
+            $view->save();
+            drupal_set_message(t('Views Natural Sort Upgraded the view !name.', array('!name' => $view_name)), 'status');
+          }
+        }
+      }
+    }
+  }
+  cache_clear_all();
+  return t('If you implement your views using Features, be sure to update the Featues that contain View Natural Sort Views immediatly after this upgrade and before the next revert.');
+}
