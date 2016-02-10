@@ -25,23 +25,13 @@
 function views_natural_sort_menu() {
   $items = array();
   $items['admin/structure/views/settings/views_natural_sort'] = array(
-    'title' => 'Natural Sort Settings',
+    'title' => 'Natural Sort',
     'description' => 'Set the settings for how particular transformations should behave.',
     'page callback' => 'views_natural_sort_settings_page',
     'access callback' => 'user_access',
     'access arguments' => array('administer views'),
     'file' => 'views_natural_sort.admin.inc',
     'type' => MENU_LOCAL_TASK,
-  );
-  $items['admin/structure/views/settings/views_natural_sort/rebuild_index'] = array(
-    'title' => 'Rebuild Search Index',
-    'description' => 'Rebuild Views Natural Sort\'s search index',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('views_natural_sort_rebuild_index_form'),
-    'access callback' => 'user_access',
-    'access arguments' => array('administer views'),
-    'file' => 'views_natural_sort.admin.inc',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
   );
   return $items;
 }
@@ -67,7 +57,7 @@ function views_natural_sort_module_implements_alter(&$implements, $hook) {
  * Implements hook_views_natural_sort_get_entry_types().
  */
 function views_natural_sort_views_natural_sort_get_entry_types() {
-  $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+  $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
   $entry_types = array();
   foreach ($supported_entity_properties as $entity_type => $properties) {
     foreach ($properties as $property => $schema_info) {
@@ -84,7 +74,7 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
  * Implements hook_views_natural_sort_get_rebuild_data();
  */
 function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
-  $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+  $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
   if (empty($supported_entity_properties[$entry_type['entity_type']]) ||
     empty($supported_entity_properties[$entry_type['entity_type']][$entry_type['field']])) {
     return array();
@@ -109,7 +99,7 @@ function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
  * This keeps our natural sort index up to date.
  */
 function views_natural_sort_entity_insert($entity, $type) {
-  $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+  $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
   if (empty($supported_entity_properties[$type])) {
     return;
   }
@@ -356,13 +346,16 @@ function views_natural_sort_get_supported_entity_properties() {
 /**
  * Returns a list of properties that we know views will allow us to alter.
  *
- * This isn't used yet.
+ * This list of properties is more realistic than "supported properties" because
+ * it factors in what views actually contains handlers for. This is used by
+ * all the administration functions to determine what properties need to be
+ * affected by VNS.
  *
  * @return mixed
  *   Returns an array formatted as views_natural_sort_get_supported_entity_properties
  *   or FALSE when views hasn't initianalized yet.
  *
- * @see views_natural_sort_get_views_configurable_properties
+ * @see views_natural_sort_get_supported_entity_properties
  */
 function views_natural_sort_get_views_configurable_properties() {
   $views_configurable_properties = &drupal_static(__FUNCTION__, array());
@@ -374,10 +367,12 @@ function views_natural_sort_get_views_configurable_properties() {
     }
     foreach($supported_entity_properties as $entity => $properties) {
       foreach($properties as $property => $schema_info) {
-        if (empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]) ||
-          empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']) ||
-          empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler']) ||
-          !in_array($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler'], array('views_natural_sort_handler_sort', 'views_handler_sort'))) {
+        if (!empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]) &&
+          !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']) &&
+          !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler']) &&
+          in_array($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler'], array('views_natural_sort_handler_sort', 'views_handler_sort'))) {
+          $views_configurable_properties[$entity][$property] = $schema_info;
+        }
       }
     }
   }
@@ -395,7 +390,7 @@ function views_natural_sort_get_views_configurable_properties() {
  *   An array that represents the VNS table row to be inserted.
  */
 function views_natural_sort_entity_to_vns($entity, $entity_type, $field) {
-  $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
+  $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
   if (empty($supported_entity_properties[$entity_type]) ||
     empty($supported_entity_properties[$entity_type][$field])) {
     throw new Exception("$entity_type -> $field doesn't exist. Cannot create Views Natural Sort record");
