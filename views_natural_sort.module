@@ -325,7 +325,7 @@ function views_natural_sort_get_supported_entity_properties() {
       }
       $properties = $info['properties'];
       foreach($properties as $property => $property_info) {
-        $property_info = array_merge($property_info, entity_property_info_defaults());
+        $property_info += entity_property_info_defaults();
         if ($property_info['type'] != 'text' || empty($property_info['schema field'])) {
           continue;
         }
