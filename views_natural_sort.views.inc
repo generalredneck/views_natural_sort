@@ -24,11 +24,13 @@ function views_natural_sort_views_data_alter(&$views_data) {
     }
     foreach ($data as $view_field => &$view_field_data) {
       if (isset($view_field_data['field']) &&
-        ((isset($view_field_data['field']['field']) && in_array($view_field_data['field']['field'], $schema_fields[$table])) || in_array($view_field, $schema_fields[$table])) &&
-        $view_field_data['sort']['handler'] == 'views_handler_sort') {
-        // We've verified that this is a perfect candidate to add our sort
-        // handler to.
-        $view_field_data['sort']['handler'] = 'views_natural_sort_handler_sort';
+        isset($view_field_data['sort']) &&
+        $view_field_data['sort']['handler'] == 'views_handler_sort' &&
+        ((isset($view_field_data['field']['field']) && in_array($view_field_data['field']['field'], $schema_fields[$table])) ||
+          in_array($view_field, $schema_fields[$table]))) {
+          // We've verified that this is a perfect candidate to add our sort
+          // handler to.
+          $view_field_data['sort']['handler'] = 'views_natural_sort_handler_sort';
       }
     }
   }
