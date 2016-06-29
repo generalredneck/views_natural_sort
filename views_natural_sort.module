@@ -93,8 +93,8 @@ function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
   $data = array();
 
   foreach ($entity_ids as $entity_id) {
-    $entity = reset(entity_load($entry_type['entity_type'], array($entity_id)));
-
+    $results = entity_load($entry_type['entity_type'], array($entity_id));
+    $entity = reset($results);
     $data[] = array(
       'eid' => $entity_id,
       'entity_type' => $entry_type['entity_type'],

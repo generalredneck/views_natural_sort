@@ -79,7 +79,8 @@ function views_natural_sort_text_field_views_natural_sort_get_rebuild_data($entr
   }
 
   foreach ($entity_ids as $entity_id) {
-    $entity = reset(entity_load($entry_type['entity_type'], array($entity_id)));
+    $results = entity_load($entry_type['entity_type'], array($entity_id));
+    $entity = reset($results);
     $entries = _views_natural_sort_text_field_to_vns($entry_type['entity_type'], $entity, $field);
     if (!empty($entries)) {
       $data = array_merge($data, $entries);
