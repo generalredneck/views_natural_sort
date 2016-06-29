@@ -79,17 +79,31 @@ function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
     empty($supported_entity_properties[$entry_type['entity_type']][$entry_type['field']])) {
     return array();
   }
-  $entities = entity_load($entry_type['entity_type']);
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', $entry_type['entity_type']);
+
+  $result = $query->execute();
+  $entity_ids = array();
+
+  if (isset($result[$entry_type['entity_type']])) {
+    $entity_ids = array_keys($result[$entry_type['entity_type']]);
+  }
+
   $data = array();
-  foreach($entities as $eid => $entity) {
+
+  foreach ($entity_ids as $entity_id) {
+    $entity = reset(entity_load($entry_type['entity_type'], array($entity_id)));
+
     $data[] = array(
-      'eid' => $eid,
+      'eid' => $entity_id,
       'entity_type' => $entry_type['entity_type'],
       'field' => $entry_type['field'],
       'delta' => 0,
       'content' => $entity->$entry_type['field'],
     );
   }
+
   return $data;
 }
 

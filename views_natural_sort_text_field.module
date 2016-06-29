@@ -59,11 +59,30 @@ function views_natural_sort_text_field_views_natural_sort_get_rebuild_data($entr
   }
   $field = field_info_field($entry_type['field']);
   $data = array();
-  $entities = entity_load($entry_type['entity_type']);
-  foreach ($entities as $entity) {
+  $bundles = array();
+
+  if (isset($field['bundles'][$entry_type['entity_type']])) {
+    foreach ($field['bundles'][$entry_type['entity_type']] as $key => $bundle) {
+      $bundles[] = $bundle;
+    }
+  }
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', $entry_type['entity_type'])
+        ->entityCondition('bundle', $bundles, 'IN');
+
+  $result = $query->execute();
+  $entity_ids = array();
+
+  if (isset($result[$entry_type['entity_type']])) {
+    $entity_ids = array_keys($result[$entry_type['entity_type']]);
+  }
+
+  foreach ($entity_ids as $entity_id) {
+    $entity = reset(entity_load($entry_type['entity_type'], array($entity_id)));
     $entries = _views_natural_sort_text_field_to_vns($entry_type['entity_type'], $entity, $field);
     if (!empty($entries)) {
-      $data += $entries;
+      $data = array_merge($data, $entries);
     }
   }
   return $data;
