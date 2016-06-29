@@ -104,7 +104,9 @@ function views_natural_sort_entity_insert($entity, $type) {
     return;
   }
   foreach ($supported_entity_properties[$type] as $property => $property_info) {
-    views_natural_sort_store(views_natural_sort_entity_to_vns($entity, $type, $property));
+    if (isset($entity->{$property})) {
+      views_natural_sort_store(views_natural_sort_entity_to_vns($entity, $type, $property));
+    }
   }
 }
 
