@@ -157,6 +157,9 @@ function views_natural_sort_rebuild_index($entry_type, &$context) {
       return;
     }
   }
+  if (!isset($context['results']['entries'])) {
+    $context['results']['entries'] = 0;
+  }
 
   $results = array_slice($sandbox['entries'], $sandbox['current'], variable_get('views_natural_sort_rebuild_items_per_batch', '500'));
 
