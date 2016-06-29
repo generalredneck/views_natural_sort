@@ -6,6 +6,13 @@ function views_natural_sort_text_field_views_api() {
   );
 }
 
+function views_natural_sort_text_field_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'form_alter' && isset($implementations['views_natural_sort_text_field'])) {
+    unset($implementations['views_natural_sort_text_field']);
+    $implementations['views_natural_sort_text_field'] = FALSE;
+  }
+}
+
 function views_natural_sort_text_field_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
   $potential_fields = views_natrual_sort_text_get_potential_fields();
   if (!isset($potential_fields[$form['#field']['id']])) {
