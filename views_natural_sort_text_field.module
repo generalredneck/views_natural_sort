@@ -7,6 +7,10 @@ function views_natural_sort_text_field_views_api() {
 }
 
 function views_natural_sort_text_field_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
+  $potential_fields = views_natrual_sort_text_get_potential_fields();
+  if (!isset($potential_fields[$form['#field']['id']])) {
+    return;
+  }
   //TODO: Inform the user that this field is being used in views.
   $form['field']['views_natural_sort_enable_sort'] = array(
     '#type' => 'checkbox',
@@ -37,7 +41,7 @@ function views_natural_sort_text_field_views_natural_sort_get_entry_types($field
   }
   $entry_types = array();
   foreach($fields as $field) {
-    $entry_types += views_natural_sort_text_field_get_entry_types_from_field($field);
+    $entry_types = array_merge($entry_types, views_natural_sort_text_field_get_entry_types_from_field($field));
   }
   return $entry_types;
 }
@@ -107,19 +111,30 @@ function views_natural_sort_text_field_field_attach_update($entity_type, $entity
   }
 }
 
-function views_natural_sort_text_field_get_configured_fields(){
-  $all_fields = field_info_fields();
+function views_natural_sort_text_field_get_configured_fields() {
+  $potential_fields = views_natrual_sort_text_get_potential_fields();
   $returned_fields = array();
-  foreach($all_fields as $field_name => $field) {
-    if ($field['module'] == 'text' &&
-      $field['storage']['type'] == 'field_sql_storage' &&
-      $field['columns']['value']['type'] == 'varchar' &&
-      !empty($field['views_natural_sort_enable_sort'])) {
+  foreach ($potential_fields as $field) {
+    if (!empty($field['views_natural_sort_enable_sort'])) {
       $returned_fields[$field['id']] = $field;
     }
   }
   return $returned_fields;
 }
+
+function views_natrual_sort_text_get_potential_fields() {
+  $all_fields = field_info_fields();
+  $returned_fields = array();
+  foreach($all_fields as $field_name => $field) {
+    if ($field['module'] == 'text' &&
+      $field['storage']['type'] == 'field_sql_storage' &&
+      $field['columns']['value']['type'] == 'varchar') {
+      $returned_fields[$field['id']] = $field;
+    }
+  }
+  return $returned_fields;
+}
+
 function _views_natural_sort_text_field_store($entity_type, $entity, $field) {
   views_natural_sort_store_multiple(_views_natural_sort_text_field_to_vns($entity_type, $entity, $field));
 }
