@@ -346,7 +346,8 @@ function views_natural_sort_get_supported_entity_properties() {
           continue;
         }
         $schema = drupal_get_schema($entity_info[$entity_type]['base table']);
-        if ($schema['fields'][$property_info['schema field']]['type'] != 'varchar') {
+         $schema_field = $property_info['schema field'];
+        if (empty($schema['fields'][$schema_field]) || $schema['fields'][$schema_field]['type'] != 'varchar') {
           continue;
         }
         $supported_properties[$entity_type][$property] = array(
