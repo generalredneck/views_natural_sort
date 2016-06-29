@@ -118,6 +118,7 @@ function views_natural_sort_entity_insert($entity, $type) {
     return;
   }
   foreach ($supported_entity_properties[$type] as $property => $property_info) {
+    // Proposed by hgoto in #2672538. Made it in before he got credit.
     if (isset($entity->{$property})) {
       views_natural_sort_store(views_natural_sort_entity_to_vns($entity, $type, $property));
     }
