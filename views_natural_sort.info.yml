@@ -1,0 +1,7 @@
+name: Views Natural Sort
+type: module
+description: Sort results naturaly on a node's title skipping articles like "the" and "a."
+core: 8.x
+package: Views
+dependencies:
+  - views
