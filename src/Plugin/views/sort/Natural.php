@@ -60,6 +60,7 @@ class Natural extends SortPluginBase {
     $options = parent::sortOptions();
     $options['NASC'] = $this->t('Sort ascending naturally');
     $options['NDESC'] = $this->t('Sort descending naturally');
+    return $options;
   }
 
   /**
@@ -75,7 +76,7 @@ class Natural extends SortPluginBase {
         return $this->t('natural asc');
         break;
       default:
-        return $label
+        return $label;
         break;
     }
   }
