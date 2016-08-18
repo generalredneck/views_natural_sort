@@ -1,0 +1,9 @@
+langcode: en
+status: true
+name: 'Views Natural Sort Test Content'
+type: views_natural_sort_test_content
+description: 'Content type used for testing the basic functionality of the Views Natural Sort module.'
+help: ''
+new_revision: false
+preview_mode: 1
+display_submitted: true

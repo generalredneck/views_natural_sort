@@ -1,0 +1,7 @@
+name: Views Natural Sort Test
+type: module
+description: Set up module for Views Natural Sort testing.
+core: 8.x
+package: Testing
+dependencies:
+  - views_natural_sort
