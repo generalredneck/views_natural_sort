@@ -97,7 +97,7 @@ function views_natural_sort_entity_insert(EntityInterface $entity) {
   foreach ($supported_entity_properties[$entity->getEntityTypeId()] as $property => $property_info) {
     // Proposed by hgoto in #2672538. Made it in before he got credit.
     if (isset($entity->{$property})) {
-      views_natural_sort_store(views_natural_sort_entity_to_vns($entity, $property));
+      views_natural_sort_store_multiple(views_natural_sort_entity_to_vns($entity, $property));
     }
   }
 }
@@ -362,11 +362,16 @@ function views_natural_sort_entity_to_vns(EntityInterface $entity, $field) {
     empty($supported_entity_properties[$entity_type][$field])) {
     throw new Exception("$entity_type -> $field doesn't exist. Cannot create Views Natural Sort record");
   }
-  return array(
-    'eid' => $entity->id(),
-    'entity_type' => $entity_type,
-    'field' => $field,
-    'delta' => 0,
-    'content' => $entity->get($field)->getValue(),
-  );
+  $data = [];
+  foreach ($entity->get($field)->getValue() as $delta => $value) {
+    $data[] = [
+      'eid' => $entity->id(),
+      'entity_type' => $entity_type,
+      'field' => $field,
+      'delta' => $delta,
+      // This may have to be passed in if it's not always ['value'].
+      'content' => $value['value'],
+    ];
+  }
+  return $data;
 }
