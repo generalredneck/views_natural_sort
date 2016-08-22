@@ -4,6 +4,7 @@ namespace Drupal\views_natural_sort\Plugin\views\sort;
 
 use Drupal\views\Plugin\views\display\DisplayPluginBase;
 use Drupal\views\ViewExecutable;
+use Drupal\views\Views;
 use Drupal\views\Plugin\views\sort\SortPluginBase;
 
 /**
@@ -34,7 +35,6 @@ class Natural extends SortPluginBase {
       parent::query();
       return;
     }
-    /*
     // If someone has submitted the exposed form, lets grab it here
     if ($this->options['exposed'] && $this->view->exposed_data['sort_order']) {
       $temporder = $this->view->exposed_data['sort_order'];
@@ -45,15 +45,35 @@ class Natural extends SortPluginBase {
     }
 
     // Add the Views Natural Sort table for this field.
-    $vns_alias = 'vns_' . $this->table_alias;
+    $vns_alias = 'vns_' . $this->tableAlias;
     if (empty($this->query->relationships[$vns_alias])) {
-      $this->ensure_my_table();
-      $vns_alias = $this->query->add_relationship('vns_' . $this->table_alias, $this->natural_sort_join(), $this->table, $this->relationship);
+      $this->ensureMyTable();
+      $vns_alias = $this->query->addRelationship('vns_' . $this->tableAlias, $this->naturalSortJoin(), $this->table, $this->relationship);
     }
     // Sometimes we get the appended N from the sort options. Filter it out here.
     $order = substr($temporder, 0, 1) == 'N' ? substr($temporder, 1) : $temporder;
-    $this->query->add_orderby($vns_alias, 'content', $order);
-  }*/
+    $this->query->addOrderBy($vns_alias, 'content', $order);
+  }
+  public function naturalSortJoin() {
+    $table_data = Views::viewsData()->get($this->table);
+    $configuration = [
+      'table' => 'views_natural_sort',
+      'field' => 'eid',
+      'left_field' => $table_data['table']['base']['field'],
+      'left_table' => $this->table,
+      'extra' => [
+        [
+          'field' => 'entity_type',
+          'value' => $table_data['table']['entity type'],
+        ],
+        [
+          'field' => 'field',
+          'value' => $this->realField,
+        ],
+      ]
+    ];
+    $join = Views::pluginManager('join')->createInstance('standard', $configuration);
+    return $join;
   }
 
   protected function sortOptions() {
