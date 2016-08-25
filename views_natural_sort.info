@@ -1,5 +1,5 @@
 name = Views Natural Sort
-description = Sort results naturaly on a node's title skipping articles like "the" and "a."
+description = Sort results naturally on a node's title skipping articles like "the" and "a."
 dependencies[] = views
 dependencies[] = entity
 

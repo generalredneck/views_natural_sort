@@ -1,5 +1,5 @@
 name = Views Natural Sort Text Field Support
-description = Sort results naturaly on a text field skipping articles like "the" and "a." 
+description = Sort results naturally on a text field skipping articles like "the" and "a."
 dependencies[] = views_natural_sort
 package = Views
 core = 7.x
