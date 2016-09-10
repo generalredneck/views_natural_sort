@@ -1,0 +1,80 @@
+<?php
+
+/**
+ * Implement hook_form()
+ */
+function views_natural_sort_test_form($node, $form_state) {
+  return node_content_form($node, $form_state);
+}
+
+/**
+ * Implements hook_node_info().
+ */
+function views_natural_sort_test_node_info() {
+  return array(
+    'views_natural_sort_test_content' => array(
+      'name' => t('Views Natural Sort Test Content'),
+      'base' => 'node_content',
+      'description' => t('Content type used for testing the basic functionality of the Views Natural Sort module.'),
+
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function views_natural_sort_test_views_api() {
+  return array(
+    'api' => 3.0,
+    'path' => drupal_get_path('module', 'views_natural_sort_test'),
+  );
+}
+
+/**
+ * Implements hook_views_default_views().
+ */
+function views_natural_sort_test_views_default_views() {
+  $view = new view();
+  $view->name = 'views_natural_sort_test';
+  $view->description = '';
+  $view->tag = 'default';
+  $view->base_table = 'node';
+  $view->human_name = 'Views Natural Sort Test';
+  $view->core = 7;
+  $view->api_version = '3.0';
+  $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+  /* Display: Master */
+  $handler = $view->new_display('default', 'Master', 'default');
+  $handler->display->display_options['use_more_always'] = FALSE;
+  $handler->display->display_options['access']['type'] = 'perm';
+  $handler->display->display_options['cache']['type'] = 'none';
+  $handler->display->display_options['query']['type'] = 'views_query';
+  $handler->display->display_options['exposed_form']['type'] = 'basic';
+  $handler->display->display_options['pager']['type'] = 'none';
+  $handler->display->display_options['pager']['options']['offset'] = '0';
+  $handler->display->display_options['style_plugin'] = 'default';
+  $handler->display->display_options['row_plugin'] = 'fields';
+  /* Field: Content: Title */
+  $handler->display->display_options['fields']['title']['id'] = 'title';
+  $handler->display->display_options['fields']['title']['table'] = 'node';
+  $handler->display->display_options['fields']['title']['field'] = 'title';
+  $handler->display->display_options['fields']['title']['label'] = '';
+  $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
+  $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
+  /* Sort criterion: Content: Title */
+  $handler->display->display_options['sorts']['title']['id'] = 'title';
+  $handler->display->display_options['sorts']['title']['table'] = 'node';
+  $handler->display->display_options['sorts']['title']['field'] = 'title';
+  $handler->display->display_options['sorts']['title']['order'] = 'NASC';
+  /* Filter criterion: Content: Type */
+  $handler->display->display_options['filters']['type']['id'] = 'type';
+  $handler->display->display_options['filters']['type']['table'] = 'node';
+  $handler->display->display_options['filters']['type']['field'] = 'type';
+  $handler->display->display_options['filters']['type']['value'] = array(
+    'views_natural_sort_test_content' => 'views_natural_sort_test_content',
+  );
+  $views[$view->name] = $view;
+  return $views;
+}

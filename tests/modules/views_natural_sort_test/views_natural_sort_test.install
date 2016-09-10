@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * Implements hook_install().
+ */
+function views_natural_sort_test_install() {
+  node_types_rebuild();
+  $types = node_type_get_types();
+  node_add_body_field($types['views_natural_sort_test_content']);
+}
