@@ -97,7 +97,7 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
       '10 apples',
       '-1 apples',
       '-10 apples',
-      '-2 appels',
+      '-2 apples',
       '-3.550 apples',
       '-3.5501 apples',
       '3.5501 apples',

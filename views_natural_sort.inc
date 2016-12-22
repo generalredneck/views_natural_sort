@@ -131,8 +131,10 @@ function _views_natural_sort_number_transform_match_callback(array $match) {
   // Remove commas and leading zeros from whole number.
   $whole = (string) (int) str_replace(',', '', (isset($match[4]) && strlen($match[4]) > 0) ? $match[4] : $match[2]);
   // Remove traililng 0's from fraction, then add the decimal and one trailing
-  // 0.
-  $fraction = trim('.' . $match[3], '0') . '0';
+  // 0 and a space. The space serves as a way to always sort shorter decimal
+  // numbers that match exactly as less than longer ones.
+  // Ex: 3.05 and 3.05011.
+  $fraction = trim('.' . $match[3], '0') . '0 ';
   $encode = sprintf('%02u', strlen($whole)) . $whole . $fraction;
   if (strlen($match[1])) {
     // Negative number. Make 10's complement. Put back any leading white space
@@ -140,9 +142,14 @@ function _views_natural_sort_number_transform_match_callback(array $match) {
     // digit. str_replace() seems to work by copying the source to the result,
     // then successively replacing within it, rather than replacing from the
     // source to the result.
-    $digits       = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
-    $intermediate = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j');
-    $rev_digits   = array('9', '8', '7', '6', '5', '4', '3', '2', '1', '0');
+    // In this case since rules are reverced we also have to use a character
+    // that would be sorted higher than a space when a number is being compared
+    // against a longer one that is identical in negative numbers. This is so
+    // that longer numbers are always LESS than sorter numbers that have
+    // identical beginnings. Ex: -3.05 and -3.05011
+    $digits       = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ');
+    $intermediate = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k');
+    $rev_digits   = array('9', '8', '7', '6', '5', '4', '3', '2', '1', '0', ':');
     $encode       = $match[1] . str_replace($intermediate, $rev_digits, str_replace($digits, $intermediate, $encode));
   }
   return $encode;
