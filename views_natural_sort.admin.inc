@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Callbacks for managing Views Natural Sort.
@@ -42,7 +43,7 @@ function views_natural_sort_rebuild_index_form() {
 }
 
 /**
- * Form callback for the Views Natural Sort settings page
+ * Form callback for the Views Natural Sort settings page.
  *
  * Allows the removal of specific words and symbols from all your titles.
  */
@@ -94,9 +95,9 @@ function views_natural_sort_settings_form() {
  * Submit handler that saves custom word handlers and other settings.
  */
 function views_natural_sort_settings_form_submit($form, &$form_state) {
-  $beginning_words = explode(',',$form_state['values']['beginning_words']);
+  $beginning_words = explode(',', $form_state['values']['beginning_words']);
   array_walk($beginning_words, create_function('&$val', '$val = trim($val);'));
-  $words = explode(',',$form_state['values']['words']);
+  $words = explode(',', $form_state['values']['words']);
   array_walk($words, create_function('&$val', '$val = trim($val);'));
   $symbols = trim($form_state['values']['symbols']);
 
@@ -115,17 +116,22 @@ function views_natural_sort_rebuild_index_submit() {
   views_natural_sort_rebuild_index_batch_set();
 }
 
+/**
+ * Sets up the batch job for reindexing all or specified VNS entry types.
+ */
 function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()) {
   if (empty($entry_types)) {
     $entry_types = module_invoke_all('views_natural_sort_get_entry_types');
   }
-  $operations = array();
 
-  foreach($entry_types as $entry_type) {
-    $operations[] = array('views_natural_sort_rebuild_index', array($entry_type));
+  foreach ($entry_types as $entry_type) {
+    // Queue up all the data that needs to be rebuilt.
+    module_invoke_all('views_natural_sort_queue_rebuild_data', $entry_type);
   }
+
+  // Run the queue.
   $batch = array(
-    'operations' => $operations,
+    'operations' => array(array('views_natural_sort_rebuild_index', array())),
     'title' => t('Rebuilding Views Natural Sort Indexing Entries'),
     'finished' => 'views_natural_sort_rebuild_index_finished',
     'file' => drupal_get_path('module', 'views_natural_sort') . '/views_natural_sort.admin.inc',
@@ -137,46 +143,29 @@ function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()
 /**
  * Batch API callback for rebuild_index.
  */
-function views_natural_sort_rebuild_index($entry_type, &$context) {
+function views_natural_sort_rebuild_index(&$context) {
+  $queue = views_natural_sort_get_queue();
   // Alias sandbox for easier referencing.
   $sandbox = &$context['sandbox'];
-
-  // Initialize our context.
-  if (!isset($context['results']['entries'])) {
-    $context['results']['entries'] = 0;
-  }
-  if (!isset($sandbox['max'])) {
-    // Hook for modules to implement and return data that views_natural_sort can
-    // store as an index for that module's entries.
-    $sandbox['entries'] = module_invoke_all('views_natural_sort_get_rebuild_data', $entry_type);
-    $sandbox['progress'] = 0;
-    $sandbox['max'] = count($sandbox['entries']) - 1;
-    $sandbox['total'] = count($sandbox['entries']);
-
+  // Alias results for easier referencing.
+  $results = &$context['results'];
+  if (empty($sandbox)) {
     $sandbox['current'] = 0;
-
-    if ($sandbox['total'] == 0) {
-      $context['finished'] = 1;
-      return;
+    $sandbox['max'] = $queue->numberOfItems();
+    $sandbox['items_per_batch'] = variable_get('views_natural_sort_rebuild_items_per_batch', '500');
+  }
+  for ($i = 0; $i < $sandbox['items_per_batch'] && $sandbox['current'] < $sandbox['max']; $i++) {
+    $item = $queue->claimItem(10);
+    if ($item) {
+      views_natural_sort_store($item->data);
+      $queue->deleteItem($item);
     }
+    $sandbox['current']++;
   }
-
-  $results = array_slice($sandbox['entries'], $sandbox['current'], variable_get('views_natural_sort_rebuild_items_per_batch', '500'));
-
-  $entity_type = '';
-  $field = '';
-  foreach ($results as $row) {
-    views_natural_sort_store($row);
-    ++$sandbox['progress'];
-    $sandbox['current'] = $sandbox['progress'];
-    $entity_type = $row['entity_type'];
-    $field = $row['field'];
-    ++$context['results']['entries'];
+  $results['entries'] = $sandbox['current'];
+  if ($sandbox['current'] != $sandbox['max']) {
+    $context['finished'] = $sandbox['current'] / $sandbox['max'];
   }
-
-  $context['message'] = t('Processing %entity_type %field', array('%entity_type' => $entity_type, '%field' => $field));
-
-  $context['finished'] = $sandbox['progress'] / $sandbox['total'];
 }
 
 /**
@@ -184,7 +173,7 @@ function views_natural_sort_rebuild_index($entry_type, &$context) {
  */
 function views_natural_sort_rebuild_index_finished($success, $results, $operations) {
   if ($success) {
-    drupal_set_message(t('Index update has completed.'));
+    drupal_set_message(t('Index rebuild has completed.'));
     drupal_set_message(t('Indexed %count.', array(
       '%count' => format_plural($results['entries'], '1 entry', '@count entries'),
     )));

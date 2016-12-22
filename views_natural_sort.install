@@ -1,9 +1,8 @@
 <?php
+
 /**
  * @file
- *
  */
-
 
 /**
  * Implementation of hook_schema().
@@ -67,7 +66,7 @@ function views_natural_sort_install() {
       t('An'),
       t('La'),
       t('Le'),
-      t('Il')
+      t('Il'),
     )
   );
   variable_set(
@@ -127,7 +126,7 @@ function views_natural_sort_update_7200() {
       'type' => 'varchar',
       'length' => 128,
       'not null' => TRUE,
-      'default' => 'node'
+      'default' => 'node',
     )
   );
   db_add_field(
@@ -163,7 +162,7 @@ function views_natural_sort_update_7200() {
  * Upgrading 1.x VNS views to 2.x VNS views.
  */
 function views_natural_sort_update_7201() {
-  foreach($views as $view_name => $view) {
+  foreach ($views as $view_name => $view) {
     foreach ($view->display as &$display) {
       if (!empty($display->display_options['sorts'])) {
         foreach ($display->display_options['sorts'] as &$sort) {

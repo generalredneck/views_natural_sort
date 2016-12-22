@@ -1,16 +1,27 @@
 <?php
+
+/**
+ * @file
+ */
+
+/**
+ *
+ */
 class views_natural_sort_handler_sort extends views_handler_sort {
 
-  function init(&$view, &$options) {
+  /**
+   *
+   */
+  public function init(&$view, &$options) {
     parent::init($view, $options);
-    $this->natural_sort = substr($this->options['order'],0,1) == 'N';
+    $this->natural_sort = substr($this->options['order'], 0, 1) == 'N';
   }
 
   /**
    * Provide a list of options for the default sort form.
-   * Should be overridden by classes that don't override sort_form
+   * Should be overridden by classes that don't override sort_form.
    */
-  function sort_options() {
+  public function sort_options() {
     return array(
       'ASC' => t('Sort ascending'),
       'DESC' => t('Sort descending'),
@@ -19,7 +30,10 @@ class views_natural_sort_handler_sort extends views_handler_sort {
     );
   }
 
-  function query() {
+  /**
+   *
+   */
+  public function query() {
     // If this field isn't being used as a Natural Sort Field, move along
     // nothing to see here.
     if (!$this->natural_sort) {
@@ -27,7 +41,7 @@ class views_natural_sort_handler_sort extends views_handler_sort {
       return;
     }
 
-    // If someone has submitted the exposed form, lets grab it here
+    // If someone has submitted the exposed form, lets grab it here.
     if ($this->options['exposed'] && $this->view->exposed_data['sort_order']) {
       $temporder = $this->view->exposed_data['sort_order'];
     }
@@ -47,7 +61,10 @@ class views_natural_sort_handler_sort extends views_handler_sort {
     $this->query->add_orderby($vns_alias, 'content', $order);
   }
 
-  function natural_sort_join() {
+  /**
+   *
+   */
+  public function natural_sort_join() {
     $join = new views_join();
     $table_data = views_fetch_data($this->table);
     $join->definition = array(
@@ -64,13 +81,17 @@ class views_natural_sort_handler_sort extends views_handler_sort {
           'field' => 'field',
           'value' => $this->real_field,
         ),
-      )
+      ),
     );
     $join->construct();
     $join->adjusted = TRUE;
     return $join;
   }
- function admin_summary() {
+
+  /**
+   *
+   */
+  public function admin_summary() {
     if (!empty($this->options['exposed'])) {
       return t('Exposed');
     }
@@ -79,17 +100,22 @@ class views_natural_sort_handler_sort extends views_handler_sort {
       case 'asc':
       default:
         return t('asc');
-        break;
+
+      break;
       case 'DESC':
       case 'desc':
         return t('desc');
-        break;
+
+      break;
       case 'NASC':
         return t('natural asc');
-        break;
+
+      break;
       case 'NDESC':
         return t('natural asc');
-        break;
+
+      break;
     }
   }
+
 }

@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @file
+ */
+
+/**
+ *
+ */
 function views_natural_sort_remove_beginning_words($string) {
   $beginning_words = variable_get('views_natural_sort_beginning_words_remove', array());
   if (empty($beginning_words)) {
@@ -14,6 +21,9 @@ function views_natural_sort_remove_beginning_words($string) {
   );
 }
 
+/**
+ *
+ */
 function views_natural_sort_remove_words($string) {
   $words = variable_get('views_natural_sort_words_remove', array());
   if (empty($words)) {
@@ -28,12 +38,15 @@ function views_natural_sort_remove_words($string) {
     ),
     array(
       ' ',
-      ''
+      '',
     ),
     $string
   );
 }
 
+/**
+ *
+ */
 function views_natural_sort_remove_symbols($string) {
   $symbols = variable_get('views_natural_sort_symbols_remove', '');
   if (strlen($symbols) == 0) {
@@ -90,9 +103,9 @@ function views_natural_sort_numbers($string) {
  */
 function _views_natural_sort_number_transform_match_callback($match) {
 
-  // Remove commas and leading zeros from whole number
-  $whole = (string)(int)str_replace(',', '', (isset($match[4]) && strlen($match[4]) > 0) ? $match[4] : $match[2]);
-  // Remove traililng 0's from fraction, then add the decimal and one trailing 0
+  // Remove commas and leading zeros from whole number.
+  $whole = (string) (int) str_replace(',', '', (isset($match[4]) && strlen($match[4]) > 0) ? $match[4] : $match[2]);
+  // Remove traililng 0's from fraction, then add the decimal and one trailing 0.
   $fraction = trim('.' . $match[3], '0') . '0';
   $encode = sprintf('%02u', strlen($whole)) . $whole . $fraction;
   if (strlen($match[1])) {
@@ -103,7 +116,7 @@ function _views_natural_sort_number_transform_match_callback($match) {
     $digits       = array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9');
     $intermediate = array('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j');
     $rev_digits   = array('9', '8', '7', '6', '5', '4', '3', '2', '1', '0');
-    $encode = $match[1] . str_replace($intermediate, $rev_digits, str_replace($digits, $intermediate, $encode));
+    $encode       = $match[1] . str_replace($intermediate, $rev_digits, str_replace($digits, $intermediate, $encode));
   }
   return $encode;
 }
@@ -126,37 +139,43 @@ function views_natural_sort_days_of_the_week_sort_days($string) {
   $sorted_days = $day_list;
   // Go through list and resort it and Translate it.
   $start = array_search($first_day, $day_list);
-  for ($i=0; $i<7; $i++) {
-    $current_day = ($i+$start)%7;
+  for ($i = 0; $i < 7; $i++) {
+    $current_day = ($i + $start) % 7;
     $abbreviations = views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($day_list[$current_day], $used_language);
     $translated_day = t($day_list[$current_day]);
     $string = preg_replace(
       array(
         '/\b' . $translated_day . '\b/i',
-        '/\b(' . implode(views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($day_list[$current_day]), '\.?|') . ')\b/i'
+        '/\b(' . implode(views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($day_list[$current_day]), '\.?|') . ')\b/i',
       ),
-      ' ' . $i .' ',
+      ' ' . $i . ' ',
       $string
     );
   }
   return $string;
 }
 
+/**
+ *
+ */
 function views_natural_sort_days_of_the_week_get_default_days() {
-  return array (
+  return array(
     "Sunday",
     "Monday",
     "Tuesday",
     "Wednesday",
     "Thursday",
     "Friday",
-    "Saturday"
+    "Saturday",
   );
 }
 
+/**
+ *
+ */
 function views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($day, $lang = 'en') {
   $default_days = views_natural_sort_days_of_the_week_get_default_days();
-  $index = array_search($day,$default_days);
+  $index = array_search($day, $default_days);
   $default_abbrev = views_natural_sort_days_of_the_week_get_default_day_abbreviations();
   return variable_get(
     'views_natural_sort_days_of_the_week_' . $lang . '_' . $day,
@@ -164,8 +183,11 @@ function views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($d
   );
 }
 
+/**
+ *
+ */
 function views_natural_sort_days_of_the_week_get_default_day_abbreviations() {
-  return array (
+  return array(
     array("Sun"),
     array("Mon"),
     array("Tu", "Tue", "Tues"),
@@ -175,5 +197,3 @@ function views_natural_sort_days_of_the_week_get_default_day_abbreviations() {
     array("Sat"),
   );
 }
-
-

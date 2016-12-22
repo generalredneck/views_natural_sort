@@ -1,7 +1,18 @@
 <?php
-module_load_include('test','views','tests/views_query');
+
+/**
+ * @file
+ */
+
+module_load_include('test', 'views', 'tests/views_query');
+/**
+ *
+ */
 class ViewsNaturalSortBasicTest extends ViewsTestCase {
 
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views Natural Sort Basic Test',
@@ -10,10 +21,16 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
     );
   }
 
+  /**
+   *
+   */
   protected function setUp() {
     parent::setUp('views', 'views_natural_sort', 'views_natural_sort_test');
   }
 
+  /**
+   *
+   */
   public function testNaturalSortDefaultBeginningWords() {
     $titles = array(
       'A Stripped Zebra',
@@ -21,7 +38,7 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
       'The King And I',
     );
     $nodes = array();
-    foreach($titles as $title) {
+    foreach ($titles as $title) {
       $nodes[] = $this->drupalCreateNode(array(
         'type' => 'views_natural_sort_test_content',
         'title' => $title,
@@ -40,13 +57,16 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
     );
   }
 
+  /**
+   *
+   */
   public function testNaturalSortDefaultSymbols() {
     $titles = array(
       'A(Z',
       'A[B',
       'A\\C',
     );
-    foreach($titles as $title) {
+    foreach ($titles as $title) {
       $nodes[] = $this->drupalCreateNode(array(
         'type' => 'views_natural_sort_test_content',
         'title' => $title,
@@ -65,6 +85,9 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
     );
   }
 
+  /**
+   *
+   */
   public function testNaturalSortNumbers() {
     $titles = array(
       '1 apple',
@@ -78,7 +101,7 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
       '3.5501 apples',
       '3.550 apples',
     );
-    foreach($titles as $title) {
+    foreach ($titles as $title) {
       $nodes[] = $this->drupalCreateNode(array(
         'type' => 'views_natural_sort_test_content',
         'title' => $title,
@@ -103,10 +126,16 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
       array('node_title' => 'title')
     );
   }
-}
 
+}
+/**
+ *
+ */
 class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
 
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views Natural Sort Days of the Week',
@@ -115,18 +144,27 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
     );
   }
 
+  /**
+   *
+   */
   protected function setUp() {
     parent::setUp('views', 'views_natural_sort');
     variable_set('views_natural_sort_days_of_the_week_enabled', TRUE);
   }
 
-  function testDefaultDayReplace() {
-    foreach(views_natural_sort_days_of_the_week_get_default_days() as $replaced => $day) {
+  /**
+   *
+   */
+  public function testDefaultDayReplace() {
+    foreach (views_natural_sort_days_of_the_week_get_default_days() as $replaced => $day) {
       $this->assertEqual(views_natural_sort_days_of_the_week_sort_days($day), $replaced);
     }
   }
 
-  function testFirstDayMonday() {
+  /**
+   *
+   */
+  public function testFirstDayMonday() {
     variable_set("views_natural_sort_days_of_the_week_first_day_en", "Monday");
     $expected = array(
       "Monday",
@@ -137,11 +175,15 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
       "Saturday",
       "Sunday",
     );
-    foreach($expected as $replaced => $day) {
+    foreach ($expected as $replaced => $day) {
       $this->assertEqual(views_natural_sort_days_of_the_week_sort_days($day), $replaced);
     }
   }
-  function testAbbreviations() {
+
+  /**
+   *
+   */
+  public function testAbbreviations() {
     $expected = array(
       "Sun",
       "Mon.",
@@ -151,8 +193,9 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
       "Fri.",
       "Sat",
     );
-    foreach($expected as $replaced => $day) {
+    foreach ($expected as $replaced => $day) {
       $this->assertEqual(views_natural_sort_days_of_the_week_sort_days($day), $replaced);
     }
   }
+
 }

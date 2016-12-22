@@ -1,15 +1,16 @@
 <?php
+
 /**
  * @file
  * Provides a views filter that sorts titles by a more natural manner by
- * ignoring articles like "The" and "A."
+ * ignoring articles like "The" and "A.".
  *
  * Normal sort:
  * A Chorus Line
  * All American
  * Fiddler on the Roof
  * Oklahoma!
- * The King And I
+ * The King And I.
  *
  * Natural sort:
  * All American
@@ -44,6 +45,10 @@ function views_natural_sort_views_api() {
     'api' => 3.0,
   );
 }
+
+/**
+ *
+ */
 function views_natural_sort_module_implements_alter(&$implements, $hook) {
   if ($hook == 'views_data_alter') {
     // Make views natural sort always last so we get all the up to date info.
@@ -71,40 +76,36 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
 }
 
 /**
- * Implements hook_views_natural_sort_get_rebuild_data();
+ * Implements hook_views_natural_sort_queue_rebuild_data();.
  */
-function views_natural_sort_views_natural_sort_get_rebuild_data($entry_type){
+function views_natural_sort_views_natural_sort_queue_rebuild_data($entry_type) {
   $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
   if (empty($supported_entity_properties[$entry_type['entity_type']]) ||
     empty($supported_entity_properties[$entry_type['entity_type']][$entry_type['field']])) {
     return array();
   }
+  $queue = views_natural_sort_get_queue();
 
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', $entry_type['entity_type']);
-
-  $result = $query->execute();
+  $result = $query->entityCondition('entity_type', $entry_type['entity_type'])
+    ->execute();
   $entity_ids = array();
 
   if (isset($result[$entry_type['entity_type']])) {
     $entity_ids = array_keys($result[$entry_type['entity_type']]);
   }
 
-  $data = array();
-
   foreach ($entity_ids as $entity_id) {
     $results = entity_load($entry_type['entity_type'], array($entity_id));
     $entity = reset($results);
-    $data[] = array(
+    $queue->createItem(array(
       'eid' => $entity_id,
       'entity_type' => $entry_type['entity_type'],
       'field' => $entry_type['field'],
       'delta' => 0,
       'content' => $entity->$entry_type['field'],
-    );
+    ));
   }
-
-  return $data;
 }
 
 /**
@@ -149,7 +150,7 @@ function views_natural_sort_entity_delete($entity, $type) {
 }
 
 /**
- * Store Multiple views_natural_sort entries
+ * Store Multiple views_natural_sort entries.
  *
  * @param array $index_entries
  *   An array of entries to store in the views_natural_sort table.
@@ -157,13 +158,13 @@ function views_natural_sort_entity_delete($entity, $type) {
  * @see views_natural_sort_store
  */
 function views_natural_sort_store_multiple(array $index_entries) {
-  foreach($index_entries as $entry) {
+  foreach ($index_entries as $entry) {
     views_natural_sort_store($entry);
   }
 }
 
 /**
- * Save an entry to the database that represents a views_natural_sort index
+ * Save an entry to the database that represents a views_natural_sort index.
  *
  * @param array $index_entry
  *   Mirrors the views_natural_sort table
@@ -174,7 +175,6 @@ function views_natural_sort_store_multiple(array $index_entries) {
  *     $content - The transformed data that a field will
  *                be sorted by.
  */
-
 function views_natural_sort_store(array $index_entry) {
   // This should take a formatted object and store it into the views_natural_sort table.
   $string = views_natural_sort_transform($index_entry);
@@ -204,7 +204,7 @@ function views_natural_sort_store(array $index_entry) {
 }
 
 /**
- * Remove a views_natural_sort index entry based on keys
+ * Remove a views_natural_sort index entry based on keys.
  *
  * @param array $index_entry
  *   Mirrors the views_natural_sort table
@@ -213,7 +213,7 @@ function views_natural_sort_store(array $index_entry) {
  *     $field - (optional) reference to the property or field name
  *     $delta - (optional)the item number in that field or property
  *   If an optional parameter doesn't exist, this is treated as a wild care
- *   delete
+ *   delete.
  */
 function views_natural_sort_remove($index_entry) {
   $query = db_delete('views_natural_sort')
@@ -232,14 +232,14 @@ function views_natural_sort_remove($index_entry) {
  * Encodes a string into an ascii-sortable string such as:
  *  - Leading articles in common languages are ingored: The A An El La Le Il
  *  - Unimportant punctuation is ignored: # ' " ( )
- *  - Unimportant words are ignored: and of or
+ *  - Unimportant words are ignored: and of or.
  *
  * @param array $index_entry
  *   Mirrors the views_natural_sort table
  *     $eid - Entity Id of the item referenced
  *     $entity_type - The Entity Type. Ex. node
  *     $field - reference to the property or field name
- *     $delta - the item number in that field or property
+ *     $delta - the item number in that field or property.
  *
  * @return string
  *   The transformed string
@@ -256,6 +256,7 @@ function views_natural_sort_transform($index_entry) {
 
 /**
  * Get the full list of transformations to run when saving a natural sort entry.
+ *
  * @param array $index_entry
  *   The original entry to be written to the views_natural_sort table.
  *     $eid - Entity Id of the item referenced
@@ -289,8 +290,8 @@ function views_natural_sort_get_transformations($index_entry) {
  * Retrieve the full list of entities and properties that can be supported.
  *
  * @return array
- *  An array of property information keyed by entity machine name. Example:
- *  array (
+ *   An array of property information keyed by entity machine name. Example:
+ *   array (
  *    'node' => array (
  *      'type' => array (
  *        'base_table' => 'node',
@@ -329,7 +330,7 @@ function views_natural_sort_get_transformations($index_entry) {
  *        'schema_field' => 'filemime',
  *      ),
  *    ),
- *  )
+ *   )
  */
 function views_natural_sort_get_supported_entity_properties() {
   $supported_properties = &drupal_static(__FUNCTION__, array());
@@ -341,13 +342,13 @@ function views_natural_sort_get_supported_entity_properties() {
         $supported_properties[$entity_type] = array();
       }
       $properties = $info['properties'];
-      foreach($properties as $property => $property_info) {
+      foreach ($properties as $property => $property_info) {
         $property_info += entity_property_info_defaults();
         if ($property_info['type'] != 'text' || empty($property_info['schema field'])) {
           continue;
         }
         $schema = drupal_get_schema($entity_info[$entity_type]['base table']);
-         $schema_field = $property_info['schema field'];
+        $schema_field = $property_info['schema field'];
         if (empty($schema['fields'][$schema_field]) || $schema['fields'][$schema_field]['type'] != 'varchar') {
           continue;
         }
@@ -383,8 +384,8 @@ function views_natural_sort_get_views_configurable_properties() {
     if (empty($views_data)) {
       return FALSE;
     }
-    foreach($supported_entity_properties as $entity => $properties) {
-      foreach($properties as $property => $schema_info) {
+    foreach ($supported_entity_properties as $entity => $properties) {
+      foreach ($properties as $property => $schema_info) {
         if (!empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]) &&
           !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']) &&
           !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler']) &&
@@ -400,7 +401,7 @@ function views_natural_sort_get_views_configurable_properties() {
 /**
  * A helper function for creating a VNS record for storage.
  *
- * @param stdClass $entity
+ * @param object $entity
  * @param string $entity_type
  * @param string $field
  *
@@ -422,4 +423,11 @@ function views_natural_sort_entity_to_vns($entity, $entity_type, $field) {
     'delta' => 0,
     'content' => $entity->$field,
   );
+}
+
+/**
+ *
+ */
+function views_natural_sort_get_queue() {
+  return DrupalQueue::get('views_natural_sort_index_queue');
 }

@@ -1,11 +1,21 @@
 <?php
 
+/**
+ * @file
+ */
+
+/**
+ *
+ */
 function views_natural_sort_text_field_views_api() {
   return array(
     'api' => 3.0,
   );
 }
 
+/**
+ *
+ */
 function views_natural_sort_text_field_module_implements_alter(&$implementations, $hook) {
   if ($hook == 'form_alter' && isset($implementations['views_natural_sort_text_field'])) {
     unset($implementations['views_natural_sort_text_field']);
@@ -13,12 +23,15 @@ function views_natural_sort_text_field_module_implements_alter(&$implementations
   }
 }
 
+/**
+ *
+ */
 function views_natural_sort_text_field_form_field_ui_field_edit_form_alter(&$form, &$form_state, $form_id) {
   $potential_fields = views_natrual_sort_text_get_potential_fields();
   if (!isset($potential_fields[$form['#field']['id']])) {
     return;
   }
-  //TODO: Inform the user that this field is being used in views.
+  // TODO: Inform the user that this field is being used in views.
   $form['field']['views_natural_sort_enable_sort'] = array(
     '#type' => 'checkbox',
     '#title' => t('Enable natural sorting.'),
@@ -28,10 +41,13 @@ function views_natural_sort_text_field_form_field_ui_field_edit_form_alter(&$for
   $form['#submit'][] = 'views_natural_sort_text_field_form_field_ui_field_edit_form_alter_submit';
 }
 
+/**
+ *
+ */
 function views_natural_sort_text_field_form_field_ui_field_edit_form_alter_submit($form, $form_state) {
   // Rebuild index for this field.
-  if($form_state['input']['field']['views_natural_sort_enable_sort'] != 1) {
-  //TODO: Revert views back to regular sort ASC & DESC.
+  if ($form_state['input']['field']['views_natural_sort_enable_sort'] != 1) {
+    // TODO: Revert views back to regular sort ASC & DESC.
     db_delete('views_natural_sort')
       ->condition('field', $form['#field']['field_name'])
       ->execute();
@@ -42,20 +58,26 @@ function views_natural_sort_text_field_form_field_ui_field_edit_form_alter_submi
   }
 }
 
+/**
+ *
+ */
 function views_natural_sort_text_field_views_natural_sort_get_entry_types($fields = array()) {
   if (empty($fields)) {
     $fields = views_natural_sort_text_field_get_configured_fields();
   }
   $entry_types = array();
-  foreach($fields as $field) {
+  foreach ($fields as $field) {
     $entry_types = array_merge($entry_types, views_natural_sort_text_field_get_entry_types_from_field($field));
   }
   return $entry_types;
 }
 
+/**
+ *
+ */
 function views_natural_sort_text_field_get_entry_types_from_field($field) {
   $entry_types = array();
-  foreach($field['bundles'] as $entity_type => $bundles) {
+  foreach ($field['bundles'] as $entity_type => $bundles) {
     $entry_types[] = array(
       'entity_type' => $entity_type,
       'field' => $field['field_name'],
@@ -64,10 +86,14 @@ function views_natural_sort_text_field_get_entry_types_from_field($field) {
   return $entry_types;
 }
 
-function views_natural_sort_text_field_views_natural_sort_get_rebuild_data($entry_type) {
-  if (!in_array($entry_type,views_natural_sort_text_field_views_natural_sort_get_entry_types())) {
+/**
+ *
+ */
+function views_natural_sort_text_field_views_natural_sort_queue_rebuild_data($entry_type) {
+  if (!in_array($entry_type, views_natural_sort_text_field_views_natural_sort_get_entry_types())) {
     return array();
   }
+  $queue = views_natural_sort_get_queue();
   $field = field_info_field($entry_type['field']);
   $data = array();
   $bundles = array();
@@ -79,10 +105,9 @@ function views_natural_sort_text_field_views_natural_sort_get_rebuild_data($entr
   }
 
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', $entry_type['entity_type'])
-        ->entityCondition('bundle', $bundles, 'IN');
-
-  $result = $query->execute();
+  $result = $query->entityCondition('entity_type', $entry_type['entity_type'])
+    ->entityCondition('bundle', $bundles, 'IN')
+    ->execute();
   $entity_ids = array();
 
   if (isset($result[$entry_type['entity_type']])) {
@@ -93,31 +118,39 @@ function views_natural_sort_text_field_views_natural_sort_get_rebuild_data($entr
     $results = entity_load($entry_type['entity_type'], array($entity_id));
     $entity = reset($results);
     $entries = _views_natural_sort_text_field_to_vns($entry_type['entity_type'], $entity, $field);
-    if (!empty($entries)) {
-      $data = array_merge($data, $entries);
+    foreach ($entries as $entry) {
+      $queue->createItem($entry);
     }
   }
-  return $data;
 }
 
+/**
+ *
+ */
 function views_natural_sort_text_field_field_attach_insert($entity_type, $entity) {
   $configured_fields = views_natural_sort_text_field_get_configured_fields();
   foreach ($configured_fields as $field) {
-    if (in_array($entity_type, array_keys($field['bundles']))){
+    if (in_array($entity_type, array_keys($field['bundles']))) {
       _views_natural_sort_text_field_store($entity_type, $entity, $field);
     }
   }
 }
 
+/**
+ *
+ */
 function views_natural_sort_text_field_field_attach_update($entity_type, $entity) {
   $configured_fields = views_natural_sort_text_field_get_configured_fields();
   foreach ($configured_fields as $field) {
-    if (in_array($entity_type, array_keys($field['bundles']))){
+    if (in_array($entity_type, array_keys($field['bundles']))) {
       _views_natural_sort_text_field_store($entity_type, $entity, $field);
     }
   }
 }
 
+/**
+ *
+ */
 function views_natural_sort_text_field_get_configured_fields() {
   $potential_fields = views_natrual_sort_text_get_potential_fields();
   $returned_fields = array();
@@ -129,10 +162,13 @@ function views_natural_sort_text_field_get_configured_fields() {
   return $returned_fields;
 }
 
+/**
+ *
+ */
 function views_natrual_sort_text_get_potential_fields() {
   $all_fields = field_info_fields();
   $returned_fields = array();
-  foreach($all_fields as $field_name => $field) {
+  foreach ($all_fields as $field_name => $field) {
     if ($field['module'] == 'text' &&
       $field['storage']['type'] == 'field_sql_storage' &&
       $field['columns']['value']['type'] == 'varchar') {
@@ -142,25 +178,32 @@ function views_natrual_sort_text_get_potential_fields() {
   return $returned_fields;
 }
 
+/**
+ *
+ */
 function _views_natural_sort_text_field_store($entity_type, $entity, $field) {
   views_natural_sort_store_multiple(_views_natural_sort_text_field_to_vns($entity_type, $entity, $field));
 }
+
+/**
+ *
+ */
 function _views_natural_sort_text_field_to_vns($entity_type, $entity, $field) {
   $entity_info = entity_get_info($entity_type);
   $entity_id_property = $entity_info['entity keys']['id'];
   $field_name = $field['field_name'];
 
-  //TODO: add support for Field Language
+  // TODO: add support for Field Language.
   $entries = array();
   $field_items = field_get_items($entity_type, $entity, $field_name);
   if (!empty($field_items)) {
-    foreach($field_items as $delta => $row) {
+    foreach ($field_items as $delta => $row) {
       $entries[] = array(
         'eid' => $entity->$entity_id_property,
         'entity_type' => $entity_type,
         'field' => $field_name,
         'delta' => $delta,
-        'content' => $row['value']
+        'content' => $row['value'],
       );
     }
   }

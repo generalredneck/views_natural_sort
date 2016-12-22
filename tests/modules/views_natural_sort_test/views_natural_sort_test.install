@@ -1,7 +1,15 @@
 <?php
 
 /**
+ * @file
+ */
+
+/**
  * Implements hook_install().
+ */
+
+/**
+ *
  */
 function views_natural_sort_test_install() {
   node_types_rebuild();

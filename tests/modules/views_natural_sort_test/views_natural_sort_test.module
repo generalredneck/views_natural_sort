@@ -1,7 +1,15 @@
 <?php
 
 /**
+ * @file
+ */
+
+/**
  * Implement hook_form()
+ */
+
+/**
+ *
  */
 function views_natural_sort_test_form($node, $form_state) {
   return node_content_form($node, $form_state);
@@ -77,4 +85,36 @@ function views_natural_sort_test_views_default_views() {
   );
   $views[$view->name] = $view;
   return $views;
+}
+
+/**
+ *
+ */
+function views_natural_sort_test_views_create_test_content() {
+  $titles = array(
+    '1 apple',
+    '2 apples',
+    '10 apples',
+    '-1 apples',
+    '-10 apples',
+    '-2 appels',
+    '-3.550 apples',
+    '-3.5501 apples',
+    '3.5501 apples',
+    '3.550 apples',
+    'A(Z',
+    'A[B',
+    'A\\C',
+    'A Stripped Zebra',
+    'Oklahoma',
+    'The King And I',
+  );
+  foreach ($titles as $title) {
+    $node = new stdClass();
+    $node->type = 'views_natural_sort_test_content';
+    $node->title = $title;
+    node_object_prepare($node);
+    $node = node_submit($node);
+    node_save($node);
+  }
 }

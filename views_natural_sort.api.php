@@ -1,8 +1,8 @@
 <?php
+
 /**
  * @file
- *
- * Hook Definition file for Views Natural Sort
+ * Hook Definition file for Views Natural Sort.
  */
 
 /**
@@ -11,7 +11,7 @@
  * This information is passed to each module during re-index so that modules can
  * determine whether it needs to return items or not.
  *
- * @return array $entity_types
+ * @return array
  *   Array of arrays defining fields and entities to reindex
  *     array(
  *       array(
@@ -25,12 +25,12 @@ function hook_views_natural_sort_get_entry_types() {
     array(
       'entity_type' => 'user',
       'field' => 'book_favorites',
-    )
+    ),
   );
 }
 
 /**
- * Used for a custom module to define data that needs to be re-indexed when the
+ * Used for a custom module to queue data that needs to be re-indexed when the
  * module is installed or settings are changed.
  *
  * @param array $entry_type
@@ -38,20 +38,18 @@ function hook_views_natural_sort_get_entry_types() {
  *     $entity_type - The type of the entity we are getting
  *                    data that needs to be re-indexed from
  *     $field - The field that needs to be re-indexed.
- *
- * @return array $index_entries An array of index entries that need re-indexing.
  */
-function hook_views_natural_sort_get_rebuild_data($entry_type){
-  if($entry_type['entity_type'] != 'user' || $entry_type['field'] != 'book_favorites') {
+function hook_views_natural_sort_queue_rebuild_data($entry_type) {
+  if ($entry_type['entity_type'] != 'user' || $entry_type['field'] != 'book_favorites') {
     return array();
   }
   $result = db_select('user', 'u')
     ->fields('u', array('uid', 'book_favorites'))
     ->execute();
-  $data = array();
-  foreach ($result as $row ) {
+  $queue = views_natural_sort_get_queue();
+  foreach ($result as $row) {
     // Grab the data returned and queue it up for transformation.
-    $data[] = array(
+    $queue->createItem = array(
       'eid' => $row->uid,
       'entity_type' => 'user',
       'field' => 'book_favorites',
@@ -59,7 +57,6 @@ function hook_views_natural_sort_get_rebuild_data($entry_type){
       'content' => $row->book_favorites,
     );
   }
-  return $data;
 }
 
 /**
@@ -76,7 +73,7 @@ function hook_views_natural_sort_get_rebuild_data($entry_type){
  *     $field - reference to the property or field name
  *     $delta - the item number in that field or property
  *     $content - The original string before
- *                transformations
+ *                transformations.
  */
 function hook_views_natural_sort_transformations_alter(&$transformations, $index_entry) {
   // This function will receive a single argument that is the string that needs
@@ -98,10 +95,21 @@ function hook_views_natural_sort_transformations_alter(&$transformations, $index
 /**
  * This is NOT A HOOK. Example transformation function.
  *
- * @param string $string The string to be transformed.
+ * @param string $string
+ *   The string to be transformed.
  *
  * @return string A transformed string used for sorting "Naturally".
  */
 function _my_special_transformation_function($string) {
   return str_replace('a', '', $string);
+}
+
+/**
+ * This hook has been deprecated and is no longer called.
+ *
+ * @deprecated
+ *
+ * @see hook_views_natural_sort_queue_rebuild_data
+ */
+function hook_views_natural_sort_queue_rebuild_data($entry_type) {
 }
