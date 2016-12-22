@@ -30,8 +30,9 @@ function hook_views_natural_sort_get_entry_types() {
 }
 
 /**
- * Used for a custom module to queue data that needs to be re-indexed when the
- * module is installed or settings are changed.
+ * Used for a custom module to queue data that needs to be re-indexed.
+ *
+ * This is typicall used when the module is installed or settings are changed.
  *
  * @param array $entry_type
  *   Array representing an entry type with an entity_type field pair.
@@ -39,7 +40,7 @@ function hook_views_natural_sort_get_entry_types() {
  *                    data that needs to be re-indexed from
  *     $field - The field that needs to be re-indexed.
  */
-function hook_views_natural_sort_queue_rebuild_data($entry_type) {
+function hook_views_natural_sort_queue_rebuild_data(array $entry_type) {
   if ($entry_type['entity_type'] != 'user' || $entry_type['field'] != 'book_favorites') {
     return array();
   }
@@ -64,7 +65,6 @@ function hook_views_natural_sort_queue_rebuild_data($entry_type) {
  *
  * @param array &$transformations
  *   An array of transformations already defined.
- *
  * @param array $index_entry
  *   A representation of the original entry that is would have been put in the
  *   database before the transformation
@@ -75,7 +75,7 @@ function hook_views_natural_sort_queue_rebuild_data($entry_type) {
  *     $content - The original string before
  *                transformations.
  */
-function hook_views_natural_sort_transformations_alter(&$transformations, $index_entry) {
+function hook_views_natural_sort_transformations_alter(array &$transformations, array $index_entry) {
   // This function will receive a single argument that is the string that needs
   // to be transformed. The transformation helps the database sort the entry
   // to be more like a human would expect it to.
@@ -98,7 +98,8 @@ function hook_views_natural_sort_transformations_alter(&$transformations, $index
  * @param string $string
  *   The string to be transformed.
  *
- * @return string A transformed string used for sorting "Naturally".
+ * @return string
+ *   A transformed string used for sorting "Naturally".
  */
 function _my_special_transformation_function($string) {
   return str_replace('a', '', $string);

@@ -2,14 +2,11 @@
 
 /**
  * @file
- * Views related hooks.
- *
- * Automatically included by views. Because of the nature of this module this
- * is most of the code.
+ * Views related hooks for the Views Natural Sort module.
  */
 
 /**
- *
+ * Implements hook_views_data_alter().
  */
 function views_natural_sort_views_data_alter(&$views_data) {
   $supported_entity_properties = views_natural_sort_get_supported_entity_properties();

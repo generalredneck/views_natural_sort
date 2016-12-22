@@ -2,46 +2,47 @@
 
 /**
  * @file
+ * The Views Natural Sort install file.
  */
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function views_natural_sort_schema() {
 
   // Contains relations between two users.
   $schema['views_natural_sort'] = array(
-    'description' => t('Compressed titles for natural sorting.'),
+    'description' => 'Compressed titles for natural sorting.',
     'fields' => array(
       'eid' => array(
-        'description' => t('Entity id'),
+        'description' => 'Entity id',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
       'entity_type' => array(
-        'description' => t('Entity Type'),
+        'description' => 'Entity Type',
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE,
         'default' => 'node',
       ),
       'field' => array(
-        'description' => t('The field name. This will be title or some cck text field, etc.'),
+        'description' => 'The field name. This will be title or some cck text field, etc.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
         'default' => '',
       ),
       'delta' => array(
-        'description' => t('The sequence number for this data item, used for multi-value fields'),
+        'description' => 'The sequence number for this data item, used for multi-value fields',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ),
       'content' => array(
-        'description' => t('Filtered content used for sorting.'),
+        'description' => 'Filtered content used for sorting.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -55,7 +56,7 @@ function views_natural_sort_schema() {
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function views_natural_sort_install() {
   variable_set(
@@ -83,7 +84,7 @@ function views_natural_sort_install() {
 }
 
 /**
- * Implementation of hook_enable().
+ * Implements hook_enable().
  */
 function views_natural_sort_enable() {
   module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');
@@ -91,7 +92,7 @@ function views_natural_sort_enable() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function views_natural_sort_uninstall() {
   variable_del('views_natural_sort_beginning_words_remove');
@@ -102,8 +103,6 @@ function views_natural_sort_uninstall() {
 }
 
 /**
- * Impliments hook_update_N().
- *
  * Rebuild the sorting index after changes made for numerical data.
  */
 function views_natural_sort_update_7001() {
@@ -112,8 +111,6 @@ function views_natural_sort_update_7001() {
 }
 
 /**
- * Impliments hook_update_N().
- *
  * Upgrade the 7.x-1.x table structure to the 7.x-2.x table structure.
  */
 function views_natural_sort_update_7200() {

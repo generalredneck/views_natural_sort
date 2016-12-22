@@ -2,10 +2,11 @@
 
 /**
  * @file
+ * The install file for the Views Natural Sort Text Field module.
  */
 
 /**
- *
+ * Implements hook_enable().
  */
 function views_natural_sort_text_field_enable() {
   module_load_include('inc', 'views_natural_sort', 'views_natural_sort.admin');

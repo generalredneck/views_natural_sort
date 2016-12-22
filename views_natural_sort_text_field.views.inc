@@ -2,10 +2,11 @@
 
 /**
  * @file
+ * Views Related hooks for the Views Natural Sort Text Field module.
  */
 
 /**
- *
+ * Implements hook_field_views_data_alter().
  */
 function views_natural_sort_text_field_field_views_data_alter(&$data, $field, $module) {
   // TODO: check to see if field is "registered" to be sort naturally.

@@ -2,14 +2,11 @@
 
 /**
  * @file
+ * Install file for the testing module for Views Natural Sort.
  */
 
 /**
  * Implements hook_install().
- */
-
-/**
- *
  */
 function views_natural_sort_test_install() {
   node_types_rebuild();

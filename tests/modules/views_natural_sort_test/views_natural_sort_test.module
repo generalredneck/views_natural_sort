@@ -2,14 +2,11 @@
 
 /**
  * @file
+ * Testing module for Views Natural Sort.
  */
 
 /**
- * Implement hook_form()
- */
-
-/**
- *
+ * Implements hook_form().
  */
 function views_natural_sort_test_form($node, $form_state) {
   return node_content_form($node, $form_state);
@@ -30,7 +27,7 @@ function views_natural_sort_test_node_info() {
 }
 
 /**
- * Implementation of hook_views_api().
+ * Implements hook_views_api().
  */
 function views_natural_sort_test_views_api() {
   return array(
@@ -88,7 +85,7 @@ function views_natural_sort_test_views_default_views() {
 }
 
 /**
- *
+ * A convieance function that will create content used for testing.
  */
 function views_natural_sort_test_views_create_test_content() {
   $titles = array(

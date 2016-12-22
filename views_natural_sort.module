@@ -2,6 +2,10 @@
 
 /**
  * @file
+ * Views Natural Sort module.
+ */
+
+/*
  * Provides a views filter that sorts titles by a more natural manner by
  * ignoring articles like "The" and "A.".
  *
@@ -21,7 +25,7 @@
  */
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function views_natural_sort_menu() {
   $items = array();
@@ -38,7 +42,7 @@ function views_natural_sort_menu() {
 }
 
 /**
- * Implementation of hook_views_api().
+ * Implements hook_views_api().
  */
 function views_natural_sort_views_api() {
   return array(
@@ -47,7 +51,7 @@ function views_natural_sort_views_api() {
 }
 
 /**
- *
+ * Implements hook_implements_alter().
  */
 function views_natural_sort_module_implements_alter(&$implements, $hook) {
   if ($hook == 'views_data_alter') {
@@ -76,7 +80,7 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
 }
 
 /**
- * Implements hook_views_natural_sort_queue_rebuild_data();.
+ * Implements hook_views_natural_sort_queue_rebuild_data().
  */
 function views_natural_sort_views_natural_sort_queue_rebuild_data($entry_type) {
   $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
@@ -127,7 +131,7 @@ function views_natural_sort_entity_insert($entity, $type) {
 }
 
 /**
- * Implementation of hook_entity_update().
+ * Implements hook_entity_update().
  *
  * This keeps our natural sort index up to date.
  */
@@ -136,7 +140,7 @@ function views_natural_sort_entity_update($entity, $type) {
 }
 
 /**
- * Implementation of hook_entity_delete().
+ * Implements hook_entity_delete().
  *
  * This keep sour natural sort index clean.
  */
@@ -176,7 +180,8 @@ function views_natural_sort_store_multiple(array $index_entries) {
  *                be sorted by.
  */
 function views_natural_sort_store(array $index_entry) {
-  // This should take a formatted object and store it into the views_natural_sort table.
+  // This should take a formatted object and store it into the
+  // views_natural_sort table.
   $string = views_natural_sort_transform($index_entry);
 
   // The size limit on the content field for views_natual_sort is sometimes not
@@ -215,7 +220,7 @@ function views_natural_sort_store(array $index_entry) {
  *   If an optional parameter doesn't exist, this is treated as a wild care
  *   delete.
  */
-function views_natural_sort_remove($index_entry) {
+function views_natural_sort_remove(array $index_entry) {
   $query = db_delete('views_natural_sort')
     ->condition('eid', $index_entry['eid'])
     ->condition('entity_type', $index_entry['entity_type']);
@@ -229,7 +234,10 @@ function views_natural_sort_remove($index_entry) {
 }
 
 /**
- * Encodes a string into an ascii-sortable string such as:
+ * Encodes a string into an ascii-sortable string.
+ *
+ * Encoding rquires a set of transformations. Those transformations perform
+ * functionality such as:
  *  - Leading articles in common languages are ingored: The A An El La Le Il
  *  - Unimportant punctuation is ignored: # ' " ( )
  *  - Unimportant words are ignored: and of or.
@@ -244,7 +252,7 @@ function views_natural_sort_remove($index_entry) {
  * @return string
  *   The transformed string
  */
-function views_natural_sort_transform($index_entry) {
+function views_natural_sort_transform(array $index_entry) {
   // Get copy the original string.
   $string = $index_entry['content'];
   module_load_include('inc', 'views_natural_sort', 'views_natural_sort');
@@ -269,7 +277,7 @@ function views_natural_sort_transform($index_entry) {
  * @return array
  *   The final list of transformations.
  */
-function views_natural_sort_get_transformations($index_entry) {
+function views_natural_sort_get_transformations(array $index_entry) {
   $transformations = array(
     'views_natural_sort_remove_beginning_words',
     'views_natural_sort_remove_words',
@@ -371,8 +379,9 @@ function views_natural_sort_get_supported_entity_properties() {
  * affected by VNS.
  *
  * @return mixed
- *   Returns an array formatted as views_natural_sort_get_supported_entity_properties
- *   or FALSE when views hasn't initianalized yet.
+ *   Returns an array formatted as
+ *   views_natural_sort_get_supported_entity_properties or FALSE when views
+ *   hasn't initianalized yet.
  *
  * @see views_natural_sort_get_supported_entity_properties
  */
@@ -402,8 +411,11 @@ function views_natural_sort_get_views_configurable_properties() {
  * A helper function for creating a VNS record for storage.
  *
  * @param object $entity
+ *   An object representing an entity.
  * @param string $entity_type
+ *   The machine name for an entity type.
  * @param string $field
+ *   The machine name for the field the data belongs to.
  *
  * @return array
  *   An array that represents the VNS table row to be inserted.
@@ -426,7 +438,7 @@ function views_natural_sort_entity_to_vns($entity, $entity_type, $field) {
 }
 
 /**
- *
+ * Get the queue used to store natural sort index jobs.
  */
 function views_natural_sort_get_queue() {
   return DrupalQueue::get('views_natural_sort_index_queue');

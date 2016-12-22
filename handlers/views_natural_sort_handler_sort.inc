@@ -2,15 +2,16 @@
 
 /**
  * @file
+ * Constains the views natural sort sorting handler.
  */
 
 /**
- *
+ * Sort handler for sorting records naturally.
  */
 class views_natural_sort_handler_sort extends views_handler_sort {
 
   /**
-   *
+   * {@inheritdoc}
    */
   public function init(&$view, &$options) {
     parent::init($view, $options);
@@ -18,8 +19,7 @@ class views_natural_sort_handler_sort extends views_handler_sort {
   }
 
   /**
-   * Provide a list of options for the default sort form.
-   * Should be overridden by classes that don't override sort_form.
+   * {@inheritdoc}
    */
   public function sort_options() {
     return array(
@@ -31,7 +31,7 @@ class views_natural_sort_handler_sort extends views_handler_sort {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public function query() {
     // If this field isn't being used as a Natural Sort Field, move along
@@ -56,13 +56,14 @@ class views_natural_sort_handler_sort extends views_handler_sort {
       $this->ensure_my_table();
       $vns_alias = $this->query->add_relationship('vns_' . $this->table_alias, $this->natural_sort_join(), $this->table, $this->relationship);
     }
-    // Sometimes we get the appended N from the sort options. Filter it out here.
+    // Sometimes we get the appended N from the sort options. Filter it out
+    // here.
     $order = substr($temporder, 0, 1) == 'N' ? substr($temporder, 1) : $temporder;
     $this->query->add_orderby($vns_alias, 'content', $order);
   }
 
   /**
-   *
+   * Helper function that creates a join to the views natural sort table.
    */
   public function natural_sort_join() {
     $join = new views_join();
@@ -89,7 +90,7 @@ class views_natural_sort_handler_sort extends views_handler_sort {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   public function admin_summary() {
     if (!empty($this->options['exposed'])) {
@@ -101,20 +102,15 @@ class views_natural_sort_handler_sort extends views_handler_sort {
       default:
         return t('asc');
 
-      break;
       case 'DESC':
       case 'desc':
         return t('desc');
 
-      break;
       case 'NASC':
         return t('natural asc');
 
-      break;
       case 'NDESC':
         return t('natural asc');
-
-      break;
     }
   }
 

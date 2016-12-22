@@ -2,16 +2,18 @@
 
 /**
  * @file
+ * Tests for the Views Natural Sort module.
  */
 
 module_load_include('test', 'views', 'tests/views_query');
+
 /**
- *
+ * Basic tests for the Views Natural Sort Module.
  */
 class ViewsNaturalSortBasicTest extends ViewsTestCase {
 
   /**
-   *
+   * {@inheritdoc}
    */
   public static function getInfo() {
     return array(
@@ -22,14 +24,14 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   protected function setUp() {
     parent::setUp('views', 'views_natural_sort', 'views_natural_sort_test');
   }
 
   /**
-   *
+   * Test the default settings for stripping out the words A, An, and The.
    */
   public function testNaturalSortDefaultBeginningWords() {
     $titles = array(
@@ -58,7 +60,7 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
   }
 
   /**
-   *
+   * Test the default settings for symbol removal in sorting.
    */
   public function testNaturalSortDefaultSymbols() {
     $titles = array(
@@ -86,7 +88,7 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
   }
 
   /**
-   *
+   * Test sorting strings that contain numbers in them.
    */
   public function testNaturalSortNumbers() {
     $titles = array(
@@ -129,12 +131,12 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
 
 }
 /**
- *
+ * Tests all the "Days of the week" natural sort functionality.
  */
 class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
 
   /**
-   *
+   * {@inheritdoc}
    */
   public static function getInfo() {
     return array(
@@ -145,7 +147,7 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
   }
 
   /**
-   *
+   * {@inheritdoc}
    */
   protected function setUp() {
     parent::setUp('views', 'views_natural_sort');
@@ -153,7 +155,7 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
   }
 
   /**
-   *
+   * Test tranformation functionality of the days of the week transformation.
    */
   public function testDefaultDayReplace() {
     foreach (views_natural_sort_days_of_the_week_get_default_days() as $replaced => $day) {
@@ -162,7 +164,7 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
   }
 
   /**
-   *
+   * Test changing the first day of the week.
    */
   public function testFirstDayMonday() {
     variable_set("views_natural_sort_days_of_the_week_first_day_en", "Monday");
@@ -181,7 +183,7 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
   }
 
   /**
-   *
+   * Test sorting day abbreviations.
    */
   public function testAbbreviations() {
     $expected = array(
