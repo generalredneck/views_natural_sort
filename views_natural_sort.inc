@@ -175,7 +175,7 @@ function views_natural_sort_days_of_the_week_sort_days($string) {
   for ($i = 0; $i < 7; $i++) {
     $current_day = ($i + $start) % 7;
     $abbreviations = views_natural_sort_days_of_the_week_get_acceptable_day_abbreviations($day_list[$current_day], $used_language);
-    $translated_day = t('@day', array('@day' => $day_list[$current_day]);
+    $translated_day = t('@day', array('@day' => $day_list[$current_day]));
     $string = preg_replace(
       array(
         '/\b' . $translated_day . '\b/i',

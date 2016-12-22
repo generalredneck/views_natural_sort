@@ -128,7 +128,6 @@ function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()
     // Queue up all the data that needs to be rebuilt.
     module_invoke_all('views_natural_sort_queue_rebuild_data', $entry_type);
   }
-
   // Run the queue.
   $batch = array(
     'operations' => array(array('views_natural_sort_rebuild_index', array())),
@@ -157,7 +156,7 @@ function views_natural_sort_rebuild_index(&$context) {
   for ($i = 0; $i < $sandbox['items_per_batch'] && $sandbox['current'] < $sandbox['max']; $i++) {
     $item = $queue->claimItem(10);
     if ($item) {
-      views_natural_sort_store($item->data);
+      views_natural_sort_process_index_queue($item->data);
       $queue->deleteItem($item);
     }
     $sandbox['current']++;

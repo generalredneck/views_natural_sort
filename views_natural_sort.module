@@ -154,6 +154,29 @@ function views_natural_sort_entity_delete($entity, $type) {
 }
 
 /**
+ * Implements hook_cron_queue_info().
+ */
+function views_natural_sort_cron_queue_info() {
+  return array(
+    'views_natural_sort_index_queue' => array(
+      'worker callback' => 'views_natural_sort_process_index_queue',
+      'skip on cron' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Queue worker callback for views_natural_sort_index_queue.
+ *
+ * @see callback_queue_worker
+ */
+function views_natural_sort_process_index_queue($data) {
+  if (is_array($data)) {
+    views_natural_sort_store($data);
+  }
+}
+
+/**
  * Store Multiple views_natural_sort entries.
  *
  * @param array $index_entries
