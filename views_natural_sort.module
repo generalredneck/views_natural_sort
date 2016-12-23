@@ -15,15 +15,17 @@ function views_natural_sort_help($route_name, RouteMatchInterface $route_match) 
   switch ($route_name) {
     // Main module help for the views_natural_sort module.
     case 'help.page.views_natural_sort':
-      $output = '';
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('Sort results naturaly on a node&#039;s title skipping articles like &quot;the&quot; and &quot;a.&quot;') . '</p>';
+      $output = '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Sort results naturally on a node&#039;s title skipping articles like &quot;the&quot; and &quot;a.&quot;') . '</p>';
       return $output;
 
     default:
   }
 }
 
+/**
+ * Implements hook_module_implements_alter().
+ */
 function views_natural_sort_module_implements_alter(&$implements, $hook) {
   if ($hook == 'views_data_alter') {
     // Make views natural sort always last so we get all the up to date info.
@@ -114,7 +116,7 @@ function views_natural_sort_entity_update(EntityInterface $entity) {
 /**
  * Implementation of hook_entity_delete().
  *
- * This keep sour natural sort index clean.
+ * This keeps our natural sort index clean.
  */
 function views_natural_sort_entity_delete(EntityInterface $entity) {
   views_natural_sort_remove($entry = array(
@@ -151,13 +153,12 @@ function views_natural_sort_store_multiple(array $index_entries) {
  *                be sorted by.
  * @Not-Rewritten
  */
-
 function views_natural_sort_store(array $index_entry) {
   // This should take a formatted object and store it into the views_natural_sort table.
   $string = views_natural_sort_transform($index_entry);
 
-  // The size limit on the content field for views_natual_sort is sometimes not
-  // enough. Lets truncate all data down to that size. I personally feel the
+  // The size limit on the content field for views_natural_sort is sometimes not
+  // enough. Let's truncate all data down to that size. I personally feel the
   // inaccuracy is an acceptable loss, as the bigger the string gets, the less
   // permanent the sort.
   //
@@ -189,7 +190,7 @@ function views_natural_sort_store(array $index_entry) {
  *     $entity_type - The Entity Type. Ex. node
  *     $field - (optional) reference to the property or field name
  *     $delta - (optional)the item number in that field or property
- *   If an optional parameter doesn't exist, this is treated as a wild care
+ *   If an optional parameter doesn't exist, this is treated as a wild card
  *   delete
  * @Not-Rewritten
  */
@@ -208,7 +209,7 @@ function views_natural_sort_remove($index_entry) {
 
 /**
  * Encodes a string into an ascii-sortable string such as:
- *  - Leading articles in common languages are ingored: The A An El La Le Il
+ *  - Leading articles in common languages are ignored: The A An El La Le Il
  *  - Unimportant punctuation is ignored: # ' " ( )
  *  - Unimportant words are ignored: and of or
  *

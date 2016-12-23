@@ -65,7 +65,7 @@ function views_natural_sort_remove_symbols($string) {
  * Transform numbers in a string into a natural sortable string.
  *
  * Rules are as follows:
- *  - Embeded numbers will sort in numerical order. The following possibilities
+ *  - Embedded numbers will sort in numerical order. The following possibilities
  *    are supported
  *    - A leading dash indicates a negative number, unless it is preceded by a
  *      non-whitespace character, which case it is considered just a dash.
@@ -107,7 +107,7 @@ function _views_natural_sort_number_transform_match_callback($match) {
 
   // Remove commas and leading zeros from whole number
   $whole = (string)(int)str_replace(',', '', (isset($match[4]) && strlen($match[4]) > 0) ? $match[4] : $match[2]);
-  // Remove traililng 0's from fraction, then add the decimal and one trailing 0
+  // Remove trailing 0's from fraction, then add the decimal and one trailing 0
   $fraction = trim('.' . $match[3], '0') . '0';
   $encode = sprintf('%02u', strlen($whole)) . $whole . $fraction;
   if (strlen($match[1])) {
