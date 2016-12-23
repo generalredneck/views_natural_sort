@@ -102,12 +102,13 @@ function views_natural_sort_views_natural_sort_queue_rebuild_data($entry_type) {
   foreach ($entity_ids as $entity_id) {
     $results = entity_load($entry_type['entity_type'], array($entity_id));
     $entity = reset($results);
+    $field_name = $entry_type['field'];
     $queue->createItem(array(
       'eid' => $entity_id,
       'entity_type' => $entry_type['entity_type'],
-      'field' => $entry_type['field'],
+      'field' => $field_name,
       'delta' => 0,
-      'content' => $entity->$entry_type['field'],
+      'content' => $entity->$field_name,
     ));
   }
 }
