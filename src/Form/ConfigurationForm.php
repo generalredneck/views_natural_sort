@@ -23,7 +23,7 @@ class ConfigurationForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'view_natural_sort.settings',
+      'views_natural_sort.settings',
     ];
   }
 
@@ -64,11 +64,9 @@ class ConfigurationForm extends ConfigFormBase {
       '#default_value' => $config->get('rebuild_items_per_batch'),
       '#min' => 0,
       '#description' => $this->t('The number of items a batch process will work through at a given time. Raising this number will make the batch go quicker, however, raising it too high can cause timeouts and/or memory limit errors.'),
-      '#element_validate' => array('element_validate_integer_positive'),
     );
-    $form = parent::buildForm($form, $form_state);
     $form['rebuild'] = [
-      '#type' => 'fieldset',
+      '#type' => 'details',
       '#title' => $this->t('Incase of Emergency'),
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
@@ -77,10 +75,10 @@ class ConfigurationForm extends ConfigFormBase {
         '#type' => 'submit',
         '#description' => 'Incase of an emergency.',
         '#value' => $this->t('Rebuild Index'),
-        '#submit' => array('submitFormReindexOnly'),
+        '#submit' => [[$this, 'submitFormReindexOnly']],
       ],
     ];
-    return $form;
+    return parent::buildForm($form, $form_state);
   }
 
   /**

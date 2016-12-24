@@ -3,6 +3,6 @@ type: module
 description: Sort results naturaly on a node's title skipping articles like "the" and "a."
 core: 8.x
 package: Views
-configure: view_natural_sort.settings
+configure: views_natural_sort.settings
 dependencies:
   - views

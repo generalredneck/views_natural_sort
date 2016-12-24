@@ -1,5 +1,6 @@
 views_natural_sort.settings:
   path: 'admin/structure/views/settings/views_natural_sort'
+  base_route: views_ui.settings_basic
   defaults:
     _form: '\Drupal\views_natural_sort\Form\ConfigurationForm'
     _title: 'Views Natural Sort Configuration'

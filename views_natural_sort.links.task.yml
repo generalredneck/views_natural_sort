@@ -1,0 +1,5 @@
+views_natural_sort.settings_tab:
+  route_name: views_natural_sort.settings
+  weight: 100
+  title: Natural Sort
+  parent_id: views_ui.settings_tab
