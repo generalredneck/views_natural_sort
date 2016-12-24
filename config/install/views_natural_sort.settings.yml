@@ -1,0 +1,17 @@
+beginning_words_remove:
+  - The
+  - A
+  - An
+  - La
+  - Le
+  - Il
+words_remove:
+  - and
+  - or
+  - of
+symbols_remove: "#\"'\\()[]"
+days_of_the_week_enabled: false
+rebuild_items_per_batch: 500
+dependencies:
+  module:
+  - views_natural_sort

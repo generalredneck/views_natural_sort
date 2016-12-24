@@ -1,0 +1,7 @@
+your_module.admin_settings:
+  path: 'admin/structure/views/settings/views_natural_sort'
+  defaults:
+    _form: '\Drupal\views_natural_sort\Form\ConfigurationForm'
+    _title: 'Views Natural Sort Configuration'
+  requirements:
+    _permission: 'administer views'

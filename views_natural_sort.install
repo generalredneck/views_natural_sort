@@ -56,13 +56,13 @@ function views_natural_sort_schema() {
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function views_natural_sort_install() {
 }
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function views_natural_sort_uninstall() {
 }

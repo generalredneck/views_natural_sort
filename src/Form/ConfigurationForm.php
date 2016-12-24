@@ -1,0 +1,129 @@
+<?php
+
+namespace Drupal\views_natural_sort\Form;
+
+use Drupal\Core\Form\ConfigFormBase;
+use Symfony\Component\HttpFoundation\Request;
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Defines a form that configures Views Natural Sort's settings.
+ */
+class ConfigurationForm extends ConfigFormBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
+    return 'view_natural_sort_settings';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getEditableConfigNames() {
+    return [
+      'view_natural_sort.settings',
+    ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildForm(array $form, FormStateInterface $form_state, Request $request = NULL) {
+    $config = $this->config('views_natural_sort.settings');
+    $form['beginning_words_remove'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Words to filter from the beginning of a phrase',
+      '#default_value' => implode(',', $config->get('beginning_words_remove')),
+      '#description' => $this->t('Commonly, the words "A", "The", and "An" are removed when sorting book titles if they appear at the beginning of the title. Those would be great candidates for this field. Separate words with a comma.'),
+    );
+
+    $form['words_remove'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Words to filter from anywhere in a phrase',
+      '#default_value' => implode(',', $config->get('words_remove')),
+      '#description' => $this->t('Commonly used words like "of", "and", and "or" are removed when sorting book titles. Words you would like filtered go here. Separate words with a comma.'),
+    );
+
+    $form['symbols_remove'] = array(
+      '#type' => 'textfield',
+      '#title' => 'Symbols to filter from anywhere in a phrase',
+      '#default_value' => $config->get('symbols_remove'),
+      '#description' => $this->t('Most symbols are ignored when performing a sort naturally. Those symbols you want ignored go here. Do not use a separator. EX: &$".'),
+    );
+    $form['days_of_the_week_enabled'] = array(
+      '#type' => 'checkbox',
+      '#title' => 'Sort days of the week and their abbreviations',
+      '#description' => "Checking this setting will allow sorting of days of the week in their proper order starting with the day of the week that is configurable by you and for each language.",
+      '#efault_value' => $config->get('days_of_the_week_enabled'),
+    );
+    $form['rebuild_items_per_batch'] = array(
+      '#type' => 'number',
+      '#title' => 'Items per Batch',
+      '#default_value' => $config->get('rebuild_items_per_batch'),
+      '#min' => 0,
+      '#description' => $this->t('The number of items a batch process will work through at a given time. Raising this number will make the batch go quicker, however, raising it too high can cause timeouts and/or memory limit errors.'),
+      '#element_validate' => array('element_validate_integer_positive'),
+    );
+    $form = parent::buildForm($form, $form_state);
+    $form['rebuild'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Incase of Emergency'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+
+      'button' => [
+        '#type' => 'submit',
+        '#description' => 'Incase of an emergency.',
+        '#value' => $this->t('Rebuild Index'),
+        '#submit' => array('submitFormReindexOnly'),
+      ],
+    ];
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    $values = $form_state->getValues();
+    $beginning_words_remove = explode(',', $values['beginning_words_remove']);
+    array_walk(
+      $beginning_words_remove,
+      function (&$val) {
+        $val = trim($val);
+      }
+    );
+    $words_remove = explode(',', $values['words_remove']);
+    array_walk(
+      $words_remove,
+      function (&$val) {
+        $val = trim($val);
+      }
+    );
+    $symbols_remove = trim($values['symbols_remove']);
+    $this->config('views_natural_sort.settings')
+      ->set('beginning_words_remove', $beginning_words_remove)
+      ->set('words_remove', $words_remove)
+      ->set('symbols_remove', $symbols_remove)
+      ->set('days_of_the_week_enabled', $values['days_of_the_week_enabled'])
+      ->set('rebuild_items_per_batch', $values['rebuild_items_per_batch'])
+      ->save();
+    drupal_set_message($this->t('The configuration options have been saved.'));
+    $this->submitFormReindexOnly($form, $form_state);
+  }
+
+  /**
+   * Submission action for the "Rebuild Index" button.
+   *
+   * @param array $form
+   *   The form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The form state.
+   */
+  public function submitFormReindexOnly(array &$form, FormStateInterface $form_state) {
+    drupal_set_message($this->t('Index rebuild has completed.'));
+  }
+
+}
