@@ -21,8 +21,8 @@ class BasicTest extends ViewsKernelTestBase {
 
     $this->installEntitySchema('node');
     $this->installEntitySchema('user');
-    $this->installConfig(['node', 'field']);
     $this->installSchema('views_natural_sort', 'views_natural_sort');
+    $this->installConfig(['node', 'field', 'views_natural_sort']);
 
     ViewTestData::createTestViews(get_class($this), ['views_natural_sort_test']);
   }
