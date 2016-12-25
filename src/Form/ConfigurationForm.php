@@ -32,31 +32,32 @@ class ConfigurationForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, Request $request = NULL) {
     $config = $this->config('views_natural_sort.settings');
+    // TODO: Change this to be handled by the transformation plugins.
     $form['beginning_words_remove'] = array(
       '#type' => 'textfield',
       '#title' => 'Words to filter from the beginning of a phrase',
-      '#default_value' => implode(',', $config->get('beginning_words_remove')),
+      '#default_value' => implode(',', $config->get('transformation_settings.remove_beginning_words.settings')),
       '#description' => $this->t('Commonly, the words "A", "The", and "An" are removed when sorting book titles if they appear at the beginning of the title. Those would be great candidates for this field. Separate words with a comma.'),
     );
 
     $form['words_remove'] = array(
       '#type' => 'textfield',
       '#title' => 'Words to filter from anywhere in a phrase',
-      '#default_value' => implode(',', $config->get('words_remove')),
+      '#default_value' => implode(',', $config->get('transformation_settings.remove_words.settings')),
       '#description' => $this->t('Commonly used words like "of", "and", and "or" are removed when sorting book titles. Words you would like filtered go here. Separate words with a comma.'),
     );
 
     $form['symbols_remove'] = array(
       '#type' => 'textfield',
       '#title' => 'Symbols to filter from anywhere in a phrase',
-      '#default_value' => $config->get('symbols_remove'),
+      '#default_value' => $config->get('transformation_settings.remove_symbols.settings'),
       '#description' => $this->t('Most symbols are ignored when performing a sort naturally. Those symbols you want ignored go here. Do not use a separator. EX: &$".'),
     );
     $form['days_of_the_week_enabled'] = array(
       '#type' => 'checkbox',
       '#title' => 'Sort days of the week and their abbreviations',
       '#description' => "Checking this setting will allow sorting of days of the week in their proper order starting with the day of the week that is configurable by you and for each language.",
-      '#efault_value' => $config->get('days_of_the_week_enabled'),
+      '#efault_value' => $config->get('transformation_settings.days_of_the_week.enabled'),
     );
     $form['rebuild_items_per_batch'] = array(
       '#type' => 'number',
@@ -86,6 +87,7 @@ class ConfigurationForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
+    // TODO: Change this to be handled by the transformation plugins.
     $beginning_words_remove = explode(',', $values['beginning_words_remove']);
     array_walk(
       $beginning_words_remove,
@@ -102,10 +104,10 @@ class ConfigurationForm extends ConfigFormBase {
     );
     $symbols_remove = trim($values['symbols_remove']);
     $this->config('views_natural_sort.settings')
-      ->set('beginning_words_remove', $beginning_words_remove)
-      ->set('words_remove', $words_remove)
-      ->set('symbols_remove', $symbols_remove)
-      ->set('days_of_the_week_enabled', $values['days_of_the_week_enabled'])
+      ->set('transformation_settings.remove_beginning_words.settings', $beginning_words_remove)
+      ->set('transformation_settings.remove_words.settings', $words_remove)
+      ->set('transformation_settings.remove_symbols.settings', $symbols_remove)
+      ->set('transformation_settings.days_of_the_week.enabled', $values['days_of_the_week_enabled'])
       ->set('rebuild_items_per_batch', $values['rebuild_items_per_batch'])
       ->save();
     drupal_set_message($this->t('The configuration options have been saved.'));
