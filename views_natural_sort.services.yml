@@ -1,0 +1,12 @@
+services:
+  plugin.manager.vns_transformation:
+    class: Drupal\views_natural_sort\Plugin\IndexRecordContentTransformationManager
+    parent: default_plugin_manager
+  views_natural_sort.service:
+    class: Drupal\views_natural_sort\ViewsNaturalSortService
+    arguments:
+      - '@plugin.manager.vns_transformation'
+      - '@config.factory'
+      - '@module_handler'
+      - '@logger.factory'
+      - '@database'
