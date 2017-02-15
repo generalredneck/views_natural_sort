@@ -29,12 +29,14 @@ class IndexRecord {
   }
   public function setEntityType($entity_type) {
     $this->entityType = $entity_type;
+    $this->generateType();
   }
   public function getEntityType() {
     return $this->entityType;
   }
   public function setField($field) {
     $this->field = $field;
+    $this->generateType();
   }
   public function getField() {
     return $this->field;
@@ -63,6 +65,12 @@ class IndexRecord {
       $transformed_content = $transformation->transform($transformed_content);
     }
     return substr($transformed_content, 0, 255);
+  }
+  private function generateType() {
+    $this->type = new IndexRecordType($this->entityType, $this->field);
+  }
+  public function getType() {
+    return $this->type;
   }
 
   public function save() {

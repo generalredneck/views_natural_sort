@@ -10,3 +10,6 @@ services:
       - '@module_handler'
       - '@logger.factory'
       - '@database'
+      - '@views.views_data'
+      - '@queue'
+      - '@plugin.manager.queue_worker'
