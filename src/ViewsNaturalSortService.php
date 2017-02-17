@@ -148,6 +148,10 @@ class ViewsNaturalSortService {
   }
 
   public function storeIndexRecordsFromEntity(EntityInterface $entity) {
+    // TODO: Consider abstracting this out. The creation and storage of records
+    // should be handled by a converter class that interacts with specific
+    // IndexRecordTypes and creates IndexRecords. Those would probably be called
+    // directly and have nothign to do with this service.
     $entity_type = $entity->getEntityTypeId();
     $supported_entity_properties = $this->getViewsSupportedEntityProperties();
     foreach ($supported_entity_properties[$entity_type] as $field => $field_info) {

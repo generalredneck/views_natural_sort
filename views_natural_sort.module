@@ -41,7 +41,8 @@ function views_natural_sort_module_implements_alter(&$implements, $hook) {
  * @Not-Rewritten
  */
 function views_natural_sort_views_natural_sort_get_entry_types() {
-  $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
+  $service = Drupal::service('views_natural_sort.service');
+  $supported_entity_properties = $service->getViewsSupportedEntityProperties();
   $entry_types = array();
   foreach ($supported_entity_properties as $entity_type => $properties) {
     foreach ($properties as $property => $schema_info) {
@@ -134,27 +135,4 @@ function views_natural_sort_remove($index_entry) {
     $query->condition('delta', $index_entry['delta']);
   }
   $query->execute();
-}
-
-/**
- * Returns a list of properties that we know views will allow us to alter.
- *
- * This list of properties is more realistic than "supported properties" because
- * it factors in what views actually contains handlers for. This is used by
- * all the administration functions to determine what properties need to be
- * affected by VNS.
- *
- * @return mixed
- *   Returns an array formatted as views_natural_sort_get_supported_entity_properties
- *   or FALSE when views hasn't been initialized yet.
- *
- * @see views_natural_sort_get_supported_entity_properties
- * @STUBBED
- */
-function views_natural_sort_get_views_configurable_properties() {
-  $views_configurable_properties = &drupal_static(__FUNCTION__, array());
-  if (empty($supported_properties)) {
-    $supported_entity_properties = views_natural_sort_get_supported_entity_properties();
-  }
-  return $supported_entity_properties;
 }

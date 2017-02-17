@@ -3,13 +3,27 @@
 namespace Drupal\views_natural_sort\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
-use Symfony\Component\HttpFoundation\Request;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\views_natural_sort\ViewsNaturalSortService;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Defines a form that configures Views Natural Sort's settings.
  */
 class ConfigurationForm extends ConfigFormBase {
+
+  protected $viewsNaturalSort;
+
+  public function __construct(ViewsNaturalSortService $viewsNaturalSort) {
+    $this->viewsNaturalSort = $viewsNaturalSort;
+  }
+
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('views_natural_sort.service')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -123,7 +137,7 @@ class ConfigurationForm extends ConfigFormBase {
    *   The form state.
    */
   public function submitFormReindexOnly(array &$form, FormStateInterface $form_state) {
-    drupal_set_message($this->t('Index rebuild has completed.'));
+    $this->viewsNaturalSort->queueDataForRebuild();
   }
 
 }
