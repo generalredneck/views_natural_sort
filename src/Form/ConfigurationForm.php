@@ -137,7 +137,7 @@ class ConfigurationForm extends ConfigFormBase {
    *   The form state.
    */
   public function submitFormReindexOnly(array &$form, FormStateInterface $form_state) {
-    $this->viewsNaturalSort->queueDataForRebuild();
+    views_natural_sort_queue_data_for_rebuild();
   }
 
 }

@@ -43,13 +43,10 @@ function views_natural_sort_module_implements_alter(&$implements, $hook) {
 function views_natural_sort_views_natural_sort_get_entry_types() {
   $service = Drupal::service('views_natural_sort.service');
   $supported_entity_properties = $service->getViewsSupportedEntityProperties();
-  $entry_types = array();
+  $entry_types = [];
   foreach ($supported_entity_properties as $entity_type => $properties) {
     foreach ($properties as $property => $schema_info) {
-      $entry_types[] = array(
-        'entity_type' => $entity_type,
-        'field' => $property,
-      );
+      $entry_types = new IndexRecordType($entity_type, $property);
     }
   }
   return $entry_types;
@@ -58,23 +55,25 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
 /**
  * Implements hook_views_natural_sort_queue_rebuild_data().
  */
-function views_natural_sort_views_natural_sort_queue_rebuild_data(IndexRecordType $entry_type){
+function views_natural_sort_views_natural_sort_queue_rebuild_data(array $entry_types){
   $service = Drupal::service('views_natural_sort.service');
   $supported_entity_properties = $service->getViewsSupportedEntityProperties();
-  $entity_type = $entry_type->getEntityType();
-  $field = $entry_type->getField();
-
-  if (empty($supported_entity_properties[$entity_type]) ||
-    empty($supported_entity_properties[$entity_type][$field])) {
-    return;
-  }
   $queue = Drupal::queue('views_natural_sort_entity_index');
-  $query = Drupal::entityQuery($entity_type);
-  $entity_ids = $query->execute();
-  foreach ($entity_ids as $entity_id) {
-    $queue->createItem($entity_id);
+  foreach ($entry_types as $entry_type) {
+    $entity_type = $entry_type->getEntityType();
+    $field = $entry_type->getField();
+
+    if (empty($supported_entity_properties[$entity_type]) ||
+      empty($supported_entity_properties[$entity_type][$field])) {
+      continue;
+    }
+    $query = Drupal::entityQuery($entity_type);
+    $entity_ids = $query->execute();
+    foreach ($entity_ids as $entity_id) {
+      $queue->createItem($entity_id);
+    }
   }
-  return 'views_natural_sort_entity_index';
+  return ['views_natural_sort_entity_index'];
 }
 
 /**
@@ -135,4 +134,80 @@ function views_natural_sort_remove($index_entry) {
     $query->condition('delta', $index_entry['delta']);
   }
   $query->execute();
+}
+
+function views_natural_sort_queue_data_for_rebuild(array $entry_types = []) {
+  $moduleHandler = \Drupal::moduleHandler();
+  if (empty($entry_types)) {
+    $entry_types = $moduleHandler->invokeAll('views_natural_sort_get_entry_types');
+  }
+  $queues = array_unique($moduleHandler->invokeAll('views_natural_sort_queue_rebuild_data', $entry_types));
+  kpr($queues);
+  exit();
+  $operations = [];
+  foreach ($queues as $queue) {
+    $operations[] = [
+      'views_natural_sort_rebuild_index'
+      [$queue],
+    ];
+  }
+
+  $batch = [
+    'operations' => $operations,
+    'title' => t('Rebuilding Views Natural Sort Indexing Entries'),
+    'finished' => 'views_natural_sort_finish_rebuild',
+  ];
+  batch_set($batch);
+}
+
+function views_natural_sort_rebuild_index($queue_name, &$context) {
+  /** @var QueueInterface $queue */
+  $queue = \Drupal::queue($queue_name);
+  /** @var QueueWorkerInterface $queue_worker */
+  $queue_worker = \Drupal::service('plugin.manager.queue_worker')->createInstance($queue_name);
+  $config = \Drupal::configFactory()->get('views_natural_sort.settings');
+
+    // Alias sandbox for easier referencing.
+  $sandbox = &$context['sandbox'];
+    // Alias results for easier referencing.
+  $results = &$context['results'];
+  if (empty($sandbox)) {
+    $sandbox['current'] = 0;
+    $sandbox['max'] = $queue->numberOfItems();
+    $sandbox['items_per_batch'] = $config->get('rebuild_items_per_batch');
+  }
+  for ($i = 0; $i < $sandbox['items_per_batch'] && $sandbox['current'] < $sandbox['max']; $i++) {
+    while ($item = $queue->claimItem()) {
+      try {
+        $queue_worker->processItem($item->data);
+        $queue->deleteItem($item);
+      }
+      catch (SuspendQueueException $e) {
+        $queue->releaseItem($item);
+        break;
+      }
+      catch (\Exception $e) {
+        watchdog_exception('npq', $e);
+      }
+    }
+    $item = $queue->claimItem(10);
+    if ($item) {
+      views_natural_sort_process_index_queue($item->data);
+      $queue->deleteItem($item);
+    }
+    $sandbox['current']++;
+  }
+  $results['entries'] = $sandbox['current'];
+  if ($sandbox['current'] != $sandbox['max']) {
+    $context['finished'] = $sandbox['current'] / $sandbox['max'];
+  }
+}
+
+function views_natural_sort_finish_rebuild($success, $results, $operations) {
+  if ($success) {
+    drupal_set_message(t('Index rebuild has completed.'));
+    drupal_set_message(t('Indexed %count.', [
+      '%count' => \Drupal::translation()->formatPlural($results['entries'], '1 entry', '@count entries'),
+    ]));
+  }
 }

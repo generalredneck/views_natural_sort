@@ -130,6 +130,7 @@ class ViewsNaturalSortService {
     if (empty($views_supported_properties)) {
       $supported_entity_properties = $this->getSupportedEntityProperties();
       $views_data = $this->viewsData->getAll();
+
       if (empty($views_data)) {
         return FALSE;
       }
@@ -137,8 +138,8 @@ class ViewsNaturalSortService {
         foreach ($properties as $property => $schema_info) {
           if (!empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]) &&
             !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']) &&
-            !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler']) &&
-            in_array($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['handler'], array('views_natural_sort_handler_sort', 'views_handler_sort'))) {
+            !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['id']) &&
+            $views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['id'] == 'natural') {
             $views_supported_properties[$entity][$property] = $schema_info;
           }
         }
@@ -193,50 +194,6 @@ class ViewsNaturalSortService {
       'finished' => [$this, 'finishRebuild'],
     ];
     batch_set($batch);
-  }
-
-  public function rebuildIndex($queue_name, &$context) {
-    /** @var QueueInterface $queue */
-    $queue = $this->queueFactory->get($queue_name);
-    /** @var QueueWorkerInterface $queue_worker */
-    $queue_worker = $this->queueManager->createInstance($queue_name);
-    $config = $this->configFactory->get('views_natural_sort.settings');
-
-    // Alias sandbox for easier referencing.
-    $sandbox = &$context['sandbox'];
-    // Alias results for easier referencing.
-    $results = &$context['results'];
-    if (empty($sandbox)) {
-      $sandbox['current'] = 0;
-      $sandbox['max'] = $queue->numberOfItems();
-      $sandbox['items_per_batch'] = $config->get('rebuild_items_per_batch');
-    }
-    for ($i = 0; $i < $sandbox['items_per_batch'] && $sandbox['current'] < $sandbox['max']; $i++) {
-
-      while($item = $queue->claimItem()) {
-        try {
-          $queue_worker->processItem($item->data);
-          $queue->deleteItem($item);
-        }
-        catch (SuspendQueueException $e) {
-          $queue->releaseItem($item);
-          break;
-        }
-        catch (\Exception $e) {
-          watchdog_exception('npq', $e);
-        }
-      }
-      $item = $queue->claimItem(10);
-      if ($item) {
-        views_natural_sort_process_index_queue($item->data);
-        $queue->deleteItem($item);
-      }
-      $sandbox['current']++;
-    }
-    $results['entries'] = $sandbox['current'];
-    if ($sandbox['current'] != $sandbox['max']) {
-      $context['finished'] = $sandbox['current'] / $sandbox['max'];
-    }
   }
 
   public function finishRebuild($success, $results, $operations) {
