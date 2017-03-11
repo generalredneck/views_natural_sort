@@ -1,4 +1,4 @@
-rebuild_items_per_batch: 500
+rebuild_items_per_batch: 100
 transformation_settings:
   remove_beginning_words:
     enabled: true
