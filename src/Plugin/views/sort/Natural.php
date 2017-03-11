@@ -15,8 +15,11 @@ use Drupal\views\Plugin\views\sort\SortPluginBase;
  * @ViewsSort("natural")
  */
 class Natural extends SortPluginBase {
+
   /**
+   * Flag defining this particular sort as Natural or not.
    *
+   * @var bool
    */
   protected $isNaturalSort;
 
@@ -25,23 +28,18 @@ class Natural extends SortPluginBase {
    */
   public function init(ViewExecutable $view, DisplayPluginBase $display, array &$options = NULL) {
     parent::init($view, $display, $options);
-    $this->setNaturalSort(substr($this->options['order'],0,1) == 'N');
+    $this->setNaturalSort(substr($this->options['order'], 0, 1) == 'N');
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function query() {
     // If this field isn't being used as a Natural Sort Field, move along
     // nothing to see here.
     if (!$this->isNaturalSort()) {
       parent::query();
       return;
-    }
-    // If someone has submitted the exposed form, lets grab it here
-    if ($this->options['exposed'] && $this->view->exposed_data['sort_order']) {
-      $temporder = $this->view->exposed_data['sort_order'];
-    }
-    // If we are using this like a normal sort, our info will be here.
-    else {
-      $temporder = &$this->options['order'];
     }
 
     // Add the Views Natural Sort table for this field.
@@ -50,10 +48,15 @@ class Natural extends SortPluginBase {
       $this->ensureMyTable();
       $vns_alias = $this->query->addRelationship('vns_' . $this->tableAlias, $this->naturalSortJoin(), $this->table, $this->relationship);
     }
-    // Sometimes we get the appended N from the sort options. Filter it out here.
-    $order = substr($temporder, 0, 1) == 'N' ? substr($temporder, 1) : $temporder;
-    $this->query->addOrderBy($vns_alias, 'content', $order);
+    $this->query->addOrderBy($vns_alias, 'content', substr($this->options['order'], 1));
   }
+
+  /**
+   * Adds the views_natural_sort table to the query.
+   *
+   * @return Drupal\views\Plugin\views\join\Standard
+   *   Join object containing views_natural_sort table.
+   */
   public function naturalSortJoin() {
     $table_data = Views::viewsData()->get($this->table);
     $configuration = [
@@ -70,12 +73,15 @@ class Natural extends SortPluginBase {
           'field' => 'field',
           'value' => $this->realField,
         ],
-      ]
+      ],
     ];
     $join = Views::pluginManager('join')->createInstance('standard', $configuration);
     return $join;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function sortOptions() {
     $options = parent::sortOptions();
     $options['NASC'] = $this->t('Sort ascending naturally');
@@ -87,24 +93,38 @@ class Natural extends SortPluginBase {
    * {@inheritdoc}
    */
   public function adminSummary() {
+    if (!empty($this->options['exposed'])) {
+      return $this->t('Exposed');
+    }
     $label = parent::adminSummary();
     switch ($this->options['order']) {
       case 'NASC':
         return $this->t('natural asc');
-        break;
+
       case 'NDESC':
         return $this->t('natural asc');
-        break;
+
       default:
         return $label;
-        break;
     }
   }
 
+  /**
+   * Determines if this query is natural sort.
+   *
+   * @return bool
+   *   True if natural sort, False otherwise.
+   */
   public function isNaturalSort() {
     return $this->isNaturalSort;
   }
 
+  /**
+   * Sets the natural sort flag.
+   *
+   * @param bool $value
+   *   The value.
+   */
   protected function setNaturalSort($value) {
     $this->isNaturalSort = $value;
   }

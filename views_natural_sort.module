@@ -43,7 +43,7 @@ function views_natural_sort_module_implements_alter(&$implements, $hook) {
 function views_natural_sort_views_natural_sort_get_entry_types() {
   $service = Drupal::service('views_natural_sort.service');
   $supported_entity_properties = $service->getViewsSupportedEntityProperties();
-  $entry_types = [];
+  $entry_types = array();
   foreach ($supported_entity_properties as $entity_type => $properties) {
     foreach ($properties as $property => $schema_info) {
       $entry_types = new IndexRecordType($entity_type, $property);
@@ -55,25 +55,26 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
 /**
  * Implements hook_views_natural_sort_queue_rebuild_data().
  */
-function views_natural_sort_views_natural_sort_queue_rebuild_data(array $entry_types){
+function views_natural_sort_views_natural_sort_queue_rebuild_data(IndexRecordType $entry_type){
   $service = Drupal::service('views_natural_sort.service');
   $supported_entity_properties = $service->getViewsSupportedEntityProperties();
-  $queue = Drupal::queue('views_natural_sort_entity_index');
-  foreach ($entry_types as $entry_type) {
-    $entity_type = $entry_type->getEntityType();
-    $field = $entry_type->getField();
+  $entity_type = $entry_type->getEntityType();
+  $field = $entry_type->getField();
 
-    if (empty($supported_entity_properties[$entity_type]) ||
-      empty($supported_entity_properties[$entity_type][$field])) {
-      continue;
-    }
-    $query = Drupal::entityQuery($entity_type);
-    $entity_ids = $query->execute();
-    foreach ($entity_ids as $entity_id) {
-      $queue->createItem($entity_id);
-    }
+  if (empty($supported_entity_properties[$entity_type]) ||
+    empty($supported_entity_properties[$entity_type][$field])) {
+    return;
   }
-  return ['views_natural_sort_entity_index'];
+  $queue = Drupal::queue('views_natural_sort_entity_index');
+  $query = Drupal::entityQuery($entity_type);
+  $entity_ids = $query->execute();
+  foreach ($entity_ids as $entity_id) {
+    $queue->createItem([
+      'entity_type' => $entity_type,
+      'entity_id' => $entity_id
+    ]);
+  }
+  return 'views_natural_sort_entity_index';
 }
 
 /**
@@ -141,13 +142,14 @@ function views_natural_sort_queue_data_for_rebuild(array $entry_types = []) {
   if (empty($entry_types)) {
     $entry_types = $moduleHandler->invokeAll('views_natural_sort_get_entry_types');
   }
-  $queues = array_unique($moduleHandler->invokeAll('views_natural_sort_queue_rebuild_data', $entry_types));
-  kpr($queues);
-  exit();
+  $queues = [];
+  foreach ($entry_types as $entry_type) {
+    $queues = array_unique(array_merge($queues, array_filter($moduleHandler->invokeAll('views_natural_sort_queue_rebuild_data', [$entry_type]))));
+  }
   $operations = [];
   foreach ($queues as $queue) {
     $operations[] = [
-      'views_natural_sort_rebuild_index'
+      'views_natural_sort_rebuild_index',
       [$queue],
     ];
   }

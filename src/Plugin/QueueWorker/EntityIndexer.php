@@ -1,17 +1,15 @@
 <?php
 
-namespace Drupal/views_natural_sort/Plugin/QueueWorker;
+namespace Drupal\views_natural_sort\Plugin\QueueWorker;
 
 use Drupal\Core\Entity\EntityTypeManager;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Queue\QueueWorkerBase;
-use Drupal\node\NodeInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;\
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\views_natural_sort\ViewsNaturalSortService;
 
-
 /**
- * Provides base functionality for the NodePublish Queue Workers.
+ * Provides base functionality for the VNS Entith Index Queue Workers.
  *
  * @QueueWorker(
  *   id = "views_natural_sort_entity_index",
@@ -23,8 +21,8 @@ class EntityIndexer extends QueueWorkerBase implements ContainerFactoryPluginInt
   protected $entityTypeManager;
 
   public function __construct(EntityTypeManager $entityTypeManager, ViewsNaturalSortService $viewsNaturalSortService) {
-    $this->entityTypeManager = $entityTypeManager
-    $this->viewsNaturalSortService = $viewsNaturalSortService
+    $this->entityTypeManager = $entityTypeManager;
+    $this->viewsNaturalSortService = $viewsNaturalSortService;
   }
 
   /**
