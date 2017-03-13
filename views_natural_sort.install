@@ -59,6 +59,7 @@ function views_natural_sort_schema() {
  * Implements hook_install().
  */
 function views_natural_sort_install() {
+  views_natural_sort_queue_data_for_rebuild();
 }
 
 /**

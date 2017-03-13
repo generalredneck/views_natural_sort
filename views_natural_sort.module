@@ -179,7 +179,7 @@ function views_natural_sort_rebuild_index($queue_name, &$context) {
     $sandbox['items_per_batch'] = $config->get('rebuild_items_per_batch');
   }
   for ($i = 0; $i < $sandbox['items_per_batch'] && $sandbox['current'] < $sandbox['max']; $i++) {
-    while ($item = $queue->claimItem()) {
+    if ($item = $queue->claimItem(10)) {
       try {
         $queue_worker->processItem($item->data);
         $queue->deleteItem($item);
@@ -189,19 +189,15 @@ function views_natural_sort_rebuild_index($queue_name, &$context) {
         break;
       }
       catch (\Exception $e) {
-        watchdog_exception('npq', $e);
+        watchdog_exception('views_natural_sort', $e);
       }
-    }
-    $item = $queue->claimItem(10);
-    if ($item) {
-      views_natural_sort_process_index_queue($item->data);
-      $queue->deleteItem($item);
     }
     $sandbox['current']++;
   }
   $results['entries'] = $sandbox['current'];
   if ($sandbox['current'] != $sandbox['max']) {
     $context['finished'] = $sandbox['current'] / $sandbox['max'];
+    $context['message'] = t('Processed %current out of %max records.', ['%current' => $sandbox['current'], '%max' => $sandbox['max']]);
   }
 }
 
