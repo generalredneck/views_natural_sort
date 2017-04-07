@@ -58,7 +58,8 @@ class Natural extends SortPluginBase {
    *   Join object containing views_natural_sort table.
    */
   public function naturalSortJoin() {
-    $table_data = Views::viewsData()->get($this->table);
+    $storage = Views::viewsData()->getAll();
+    $table_data = $storage[$this->table];
     $configuration = [
       'table' => 'views_natural_sort',
       'field' => 'eid',

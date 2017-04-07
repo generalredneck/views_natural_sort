@@ -125,7 +125,8 @@ function views_natural_sort_entity_delete(EntityInterface $entity) {
  * @Not-Rewritten
  */
 function views_natural_sort_remove($index_entry) {
-  $query = db_delete('views_natural_sort')
+  $query = \Drupal::database()
+    ->delete('views_natural_sort')
     ->condition('eid', $index_entry['eid'])
     ->condition('entity_type', $index_entry['entity_type']);
   if (isset($index_entry['field'])) {
