@@ -21,8 +21,8 @@ class RemoveWords extends TransformationBase {
     array_walk($words, 'preg_quote');
     return preg_replace(
       array(
-        '/\s(' . implode('|', $words) . ')\s+/i',
-        '/^(' . implode('|', $words) . ')\s+/i',
+        '/\s(' . implode('|', $words) . ')\s+/iu',
+        '/^(' . implode('|', $words) . ')\s+/iu',
       ),
       array(
         ' ',

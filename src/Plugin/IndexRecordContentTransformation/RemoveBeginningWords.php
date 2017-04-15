@@ -20,7 +20,7 @@ class RemoveBeginningWords extends TransformationBase {
 
     array_walk($beginning_words, 'preg_quote');
     return preg_replace(
-      '/^(' . implode('|', $beginning_words) . ')\s+/i',
+      '/^(' . implode('|', $beginning_words) . ')\s+/iu',
       '',
       $string
     );

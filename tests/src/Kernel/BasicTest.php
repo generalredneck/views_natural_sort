@@ -120,6 +120,24 @@ class BasicTest extends ViewsKernelTestBase {
     );
   }
 
+  /**
+   * Test Unicode symbol removal in sorting.
+   */
+  public function testNaturalSortUnicodeSymbols() {
+    $plugin = new \Drupal\views_natural_sort\Plugin\IndexRecordContentTransformation\RemoveSymbols([
+      'settings' => "#…\",'\\()[]«?!»¡¿",
+    ], '', '');
+    $titles = array(
+      'Cuando… se abre, ¿dará algún tipo de señal?',
+    );
+    $expected = array(
+      'Cuando se abre dará algún tipo de señal',
+    );
+    foreach ($titles as $key => $title) {
+      $this->assertEqual($plugin->transform($title), $expected[$key]);
+    }
+  }
+
   public function testNaturalSortNumbers() {
     $node1 = Node::create([
       'type' => 'views_natural_sort_test_content',

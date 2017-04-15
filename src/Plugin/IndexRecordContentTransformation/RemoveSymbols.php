@@ -18,7 +18,7 @@ class RemoveSymbols extends TransformationBase {
       return $string;
     }
     return preg_replace(
-      '/[' . preg_quote($symbols) . ']/',
+      '/[' . preg_quote($symbols) . ']/u',
       '',
       $string
     );
