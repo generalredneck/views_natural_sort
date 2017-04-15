@@ -88,6 +88,22 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
   }
 
   /**
+   * Test Unicode symbol removal in sorting.
+   */
+  public function testNaturalSortUnicodeSymbols() {
+    $symbols = variable_set('views_natural_sort_symbols_remove', "#…\",'\\()[]«?!»¡¿");
+    $titles = array(
+      'Cuando… se abre, ¿dará algún tipo de señal?',
+    );
+    $expected = array(
+      'Cuando se abre dará algún tipo de señal',
+    );
+    foreach ($titles as $key => $title) {
+      $this->assertEqual(views_natural_sort_remove_symbols($title), $expected[$key]);
+    }
+  }
+
+  /**
    * Test sorting strings that contain numbers in them.
    */
   public function testNaturalSortNumbers() {

@@ -22,7 +22,7 @@ function views_natural_sort_remove_beginning_words($string) {
 
   array_walk($beginning_words, 'preg_quote');
   return preg_replace(
-    '/^(' . implode('|', $beginning_words) . ')\s+/i',
+    '/^(' . implode('|', $beginning_words) . ')\s+/iu',
     '',
     $string
   );
@@ -46,8 +46,8 @@ function views_natural_sort_remove_words($string) {
   array_walk($words, 'preg_quote');
   return preg_replace(
     array(
-      '/\s(' . implode('|', $words) . ')\s+/i',
-      '/^(' . implode('|', $words) . ')\s+/i',
+      '/\s(' . implode('|', $words) . ')\s+/iu',
+      '/^(' . implode('|', $words) . ')\s+/iu',
     ),
     array(
       ' ',
@@ -72,7 +72,7 @@ function views_natural_sort_remove_symbols($string) {
     return $string;
   }
   return preg_replace(
-    '/[' . preg_quote($symbols) . ']/',
+    '/[' . preg_quote($symbols) . ']/u',
     '',
     $string
   );
