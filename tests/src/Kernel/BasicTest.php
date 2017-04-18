@@ -127,12 +127,12 @@ class BasicTest extends ViewsKernelTestBase {
     $plugin = new \Drupal\views_natural_sort\Plugin\IndexRecordContentTransformation\RemoveSymbols([
       'settings' => "#…\",'\\()[]«?!»¡¿",
     ], '', '');
-    $titles = array(
+    $titles = [
       'Cuando… se abre, ¿dará algún tipo de señal?',
-    );
-    $expected = array(
+    ];
+    $expected = [
       'Cuando se abre dará algún tipo de señal',
-    );
+    ];
     foreach ($titles as $key => $title) {
       $this->assertEqual($plugin->transform($title), $expected[$key]);
     }

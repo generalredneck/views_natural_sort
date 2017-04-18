@@ -43,7 +43,7 @@ function views_natural_sort_module_implements_alter(&$implements, $hook) {
 function views_natural_sort_views_natural_sort_get_entry_types() {
   $service = Drupal::service('views_natural_sort.service');
   $supported_entity_properties = $service->getViewsSupportedEntityProperties();
-  $entry_types = array();
+  $entry_types = [];
   foreach ($supported_entity_properties as $entity_type => $properties) {
     foreach ($properties as $property => $schema_info) {
       $entry_types = new IndexRecordType($entity_type, $property);
@@ -105,10 +105,10 @@ function views_natural_sort_entity_update(EntityInterface $entity) {
  * This keeps our natural sort index clean.
  */
 function views_natural_sort_entity_delete(EntityInterface $entity) {
-  views_natural_sort_remove($entry = array(
+  views_natural_sort_remove($entry = [
     'eid' => $entity->id(),
     'entity_type' => $entity->getEntityTypeId(),
-  ));
+  ]);
 }
 
 /**

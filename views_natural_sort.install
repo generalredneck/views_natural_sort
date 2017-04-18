@@ -11,46 +11,46 @@
  */
 function views_natural_sort_schema() {
 
-  $schema['views_natural_sort'] = array(
+  $schema['views_natural_sort'] = [
     'description' => t('Compressed titles for natural sorting.'),
-    'fields' => array(
-      'eid' => array(
+    'fields' => [
+      'eid' => [
         'description' => t('Entity id'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-      ),
-      'entity_type' => array(
+      ],
+      'entity_type' => [
         'description' => t('Entity Type'),
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE,
         'default' => 'node',
-      ),
-      'field' => array(
+      ],
+      'field' => [
         'description' => t('The field name. This will be title or some cck text field, etc.'),
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
         'default' => '',
-      ),
-      'delta' => array(
+      ],
+      'delta' => [
         'description' => t('The sequence number for this data item, used for multi-value fields'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-      ),
-      'content' => array(
+      ],
+      'content' => [
         'description' => t('Filtered content used for sorting.'),
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
-      ),
-    ),
-    'primary key' => array('eid', 'entity_type', 'field', 'delta'),
-  );
+      ],
+    ],
+    'primary key' => ['eid', 'entity_type', 'field', 'delta'],
+  ];
 
   return $schema;
 }

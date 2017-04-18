@@ -47,39 +47,39 @@ class ConfigurationForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state, Request $request = NULL) {
     $config = $this->config('views_natural_sort.settings');
     // TODO: Change this to be handled by the transformation plugins.
-    $form['beginning_words_remove'] = array(
+    $form['beginning_words_remove'] = [
       '#type' => 'textfield',
       '#title' => 'Words to filter from the beginning of a phrase',
       '#default_value' => implode(',', $config->get('transformation_settings.remove_beginning_words.settings')),
       '#description' => $this->t('Commonly, the words "A", "The", and "An" are removed when sorting book titles if they appear at the beginning of the title. Those would be great candidates for this field. Separate words with a comma.'),
-    );
+    ];
 
-    $form['words_remove'] = array(
+    $form['words_remove'] = [
       '#type' => 'textfield',
       '#title' => 'Words to filter from anywhere in a phrase',
       '#default_value' => implode(',', $config->get('transformation_settings.remove_words.settings')),
       '#description' => $this->t('Commonly used words like "of", "and", and "or" are removed when sorting book titles. Words you would like filtered go here. Separate words with a comma.'),
-    );
+    ];
 
-    $form['symbols_remove'] = array(
+    $form['symbols_remove'] = [
       '#type' => 'textfield',
       '#title' => 'Symbols to filter from anywhere in a phrase',
       '#default_value' => $config->get('transformation_settings.remove_symbols.settings'),
       '#description' => $this->t('Most symbols are ignored when performing a sort naturally. Those symbols you want ignored go here. Do not use a separator. EX: &$".'),
-    );
-    $form['days_of_the_week_enabled'] = array(
+    ];
+    $form['days_of_the_week_enabled'] = [
       '#type' => 'checkbox',
       '#title' => 'Sort days of the week and their abbreviations',
       '#description' => "Checking this setting will allow sorting of days of the week in their proper order starting with the day of the week that is configurable by you and for each language.",
       '#efault_value' => $config->get('transformation_settings.days_of_the_week.enabled'),
-    );
-    $form['rebuild_items_per_batch'] = array(
+    ];
+    $form['rebuild_items_per_batch'] = [
       '#type' => 'number',
       '#title' => 'Items per Batch',
       '#default_value' => $config->get('rebuild_items_per_batch'),
       '#min' => 0,
       '#description' => $this->t('The number of items a batch process will work through at a given time. Raising this number will make the batch go quicker, however, raising it too high can cause timeouts and/or memory limit errors.'),
-    );
+    ];
     $form['rebuild'] = [
       '#type' => 'details',
       '#title' => $this->t('Incase of Emergency'),
