@@ -1,48 +1,46 @@
 <?php
-// $Id$
+
 /**
  * @file
- *
+ * Install file for the Views Natural Sort Module.
  */
-
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function views_natural_sort_schema() {
-
   $schema['views_natural_sort'] = [
-    'description' => t('Compressed titles for natural sorting.'),
+    'description' => 'Compressed titles for natural sorting.',
     'fields' => [
       'eid' => [
-        'description' => t('Entity id'),
+        'description' => 'Entity id',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ],
       'entity_type' => [
-        'description' => t('Entity Type'),
+        'description' => 'Entity Type',
         'type' => 'varchar',
         'length' => 128,
         'not null' => TRUE,
         'default' => 'node',
       ],
       'field' => [
-        'description' => t('The field name. This will be title or some cck text field, etc.'),
+        'description' => 'The field name. This will be title or some cck text field, etc.',
         'type' => 'varchar',
         'length' => 32,
         'not null' => TRUE,
         'default' => '',
       ],
       'delta' => [
-        'description' => t('The sequence number for this data item, used for multi-value fields'),
+        'description' => 'The sequence number for this data item, used for multi-value fields',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
       ],
       'content' => [
-        'description' => t('Filtered content used for sorting.'),
+        'description' => 'Filtered content used for sorting.',
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
@@ -66,4 +64,5 @@ function views_natural_sort_install() {
  * Implements hook_uninstall().
  */
 function views_natural_sort_uninstall() {
+  // Remove states and stuff.
 }

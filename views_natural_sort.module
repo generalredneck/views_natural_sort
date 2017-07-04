@@ -38,6 +38,7 @@ function views_natural_sort_module_implements_alter(&$implements, $hook) {
 
 /**
  * Implements hook_views_natural_sort_get_entry_types().
+ *
  * @Not-Rewritten
  */
 function views_natural_sort_views_natural_sort_get_entry_types() {
@@ -55,7 +56,7 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
 /**
  * Implements hook_views_natural_sort_queue_rebuild_data().
  */
-function views_natural_sort_views_natural_sort_queue_rebuild_data(IndexRecordType $entry_type){
+function views_natural_sort_views_natural_sort_queue_rebuild_data(IndexRecordType $entry_type) {
   $service = Drupal::service('views_natural_sort.service');
   $supported_entity_properties = $service->getViewsSupportedEntityProperties();
   $entity_type = $entry_type->getEntityType();
@@ -71,7 +72,7 @@ function views_natural_sort_views_natural_sort_queue_rebuild_data(IndexRecordTyp
   foreach ($entity_ids as $entity_id) {
     $queue->createItem([
       'entity_type' => $entity_type,
-      'entity_id' => $entity_id
+      'entity_id' => $entity_id,
     ]);
   }
   return 'views_natural_sort_entity_index';
@@ -91,7 +92,7 @@ function views_natural_sort_entity_insert(EntityInterface $entity) {
 }
 
 /**
- * Implementation of hook_entity_update().
+ * Implements hook_entity_update().
  *
  * This keeps our natural sort index up to date.
  */
@@ -100,7 +101,7 @@ function views_natural_sort_entity_update(EntityInterface $entity) {
 }
 
 /**
- * Implementation of hook_entity_delete().
+ * Implements hook_entity_delete().
  *
  * This keeps our natural sort index clean.
  */
@@ -112,7 +113,7 @@ function views_natural_sort_entity_delete(EntityInterface $entity) {
 }
 
 /**
- * Remove a views_natural_sort index entry based on keys
+ * Remove a views_natural_sort index entry based on keys.
  *
  * @param array $index_entry
  *   Mirrors the views_natural_sort table
@@ -121,10 +122,11 @@ function views_natural_sort_entity_delete(EntityInterface $entity) {
  *     $field - (optional) reference to the property or field name
  *     $delta - (optional)the item number in that field or property
  *   If an optional parameter doesn't exist, this is treated as a wild card
- *   delete
+ *   delete.
+ *
  * @Not-Rewritten
  */
-function views_natural_sort_remove($index_entry) {
+function views_natural_sort_remove(array $index_entry) {
   $query = \Drupal::database()
     ->delete('views_natural_sort')
     ->condition('eid', $index_entry['eid'])
@@ -138,6 +140,12 @@ function views_natural_sort_remove($index_entry) {
   $query->execute();
 }
 
+/**
+ * Views_natural_sort_queue_data_for_rebuild description.
+ *
+ * @param array $entry_types
+ *   Description.
+ */
 function views_natural_sort_queue_data_for_rebuild(array $entry_types = []) {
   $moduleHandler = \Drupal::moduleHandler();
   if (empty($entry_types)) {
