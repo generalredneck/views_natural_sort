@@ -13,3 +13,5 @@ services:
       - '@views.views_data'
       - '@queue'
       - '@plugin.manager.queue_worker'
+      - '@entity_field.manager'
+      - '@entity_type.manager'
