@@ -12,7 +12,7 @@ use Drupal\views\Views;
 */
 class BasicTest extends ViewsKernelTestBase {
 
-  public static $modules = ['node', 'field', 'text', 'user', 'views_natural_sort', 'views_natural_sort_test'];
+  public static $modules = ['comment', 'node', 'field', 'text', 'user', 'views_natural_sort', 'views_natural_sort_test'];
 
   public static $testViews = ['views_natural_sort_test'];
 
@@ -21,8 +21,9 @@ class BasicTest extends ViewsKernelTestBase {
 
     $this->installEntitySchema('node');
     $this->installEntitySchema('user');
+    $this->installEntitySchema('comment');
     $this->installSchema('views_natural_sort', 'views_natural_sort');
-    $this->installConfig(['node', 'field', 'views_natural_sort']);
+    $this->installConfig(['node', 'user', 'comment', 'field', 'views_natural_sort']);
 
     ViewTestData::createTestViews(get_class($this), ['views_natural_sort_test']);
   }
@@ -209,6 +210,62 @@ class BasicTest extends ViewsKernelTestBase {
       ],
       ['title' => 'title']
     );
+  }
+
+  public function testSupportedPropertiesCoreTest() {
+    $properties = \Drupal::service('views_natural_sort.service')->getViewsSupportedEntityProperties();
+    $expected_result = [
+      'user' =>
+      [
+        'name' =>
+        [
+          'base_table' => 'users_field_data',
+          'schema_field' => 'name',
+        ],
+        'timezone' =>
+        [
+          'base_table' => 'users_field_data',
+          'schema_field' => 'timezone',
+        ],
+      ],
+      'comment' =>
+      [
+        'subject' =>
+        [
+          'base_table' => 'comment_field_data',
+          'schema_field' => 'subject',
+        ],
+        'name' =>
+        [
+          'base_table' => 'comment_field_data',
+          'schema_field' => 'name',
+        ],
+        'hostname' =>
+        [
+          'base_table' => 'comment_field_data',
+          'schema_field' => 'hostname',
+        ],
+        'entity_type' =>
+        [
+          'base_table' => 'comment_field_data',
+          'schema_field' => 'entity_type',
+        ],
+        'field_name' =>
+        [
+          'base_table' => 'comment_field_data',
+          'schema_field' => 'field_name',
+        ],
+      ],
+      'node' =>
+      [
+        'title' =>
+        [
+          'base_table' => 'node_field_data',
+          'schema_field' => 'title',
+        ],
+      ],
+    ];
+    $this->assertEqual($properties, $expected_result);
   }
 
 }
