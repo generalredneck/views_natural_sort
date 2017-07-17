@@ -3,16 +3,17 @@
 namespace Drupal\views_natural_sort;
 
 use Drupal\Core\Config\ConfigFactory;
-use Drupal\Core\Logger\LoggerChannelFactory;
-use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Database\Connection;
-use Drupal\views_natural_sort\Plugin\IndexRecordContentTransformationManager as TransformationManager;
-use Drupal\views\ViewsData;
-use Drupal\Core\Queue\QueueWorkerManagerInterface;
+use Drupal\Core\Field\FieldTypePluginManager;
+use Drupal\Core\Logger\LoggerChannelFactory;
 use Drupal\Core\Queue\QueueFactory;
+use Drupal\Core\Queue\QueueWorkerManagerInterface;
+use Drupal\views\ViewsData;
+use Drupal\views_natural_sort\Plugin\IndexRecordContentTransformationManager as TransformationManager;
 
 /**
  * Service that manages Views Natural Sort records.
@@ -22,7 +23,7 @@ class ViewsNaturalSortService {
   /**
    * Constructor.
    */
-  public function __construct(TransformationManager $transformationManager, ConfigFactory $configFactory, ModuleHandlerInterface $moduleHandler, LoggerChannelFactory $loggerFactory, Connection $database, ViewsData $viewsData, QueueFactory $queue, QueueWorkerManagerInterface $queueManager, EntityFieldManagerInterface $entityFieldManager, EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(TransformationManager $transformationManager, ConfigFactory $configFactory, ModuleHandlerInterface $moduleHandler, LoggerChannelFactory $loggerFactory, Connection $database, ViewsData $viewsData, QueueFactory $queue, QueueWorkerManagerInterface $queueManager, EntityFieldManagerInterface $entityFieldManager, EntityTypeManagerInterface $entityTypeManager, FieldTypePluginManager $fieldTypeManager) {
     $this->configFactory = $configFactory;
     $this->moduleHandler = $moduleHandler;
     $this->loggerFactory = $loggerFactory->get('views_natural_sort');
@@ -33,6 +34,7 @@ class ViewsNaturalSortService {
     $this->queueManager = $queueManager;
     $this->entityFieldManager = $entityFieldManager;
     $this->entityTypeManager = $entityTypeManager;
+    $this->fieldTypeManager = $fieldTypeManager;
   }
 
   /**
@@ -117,10 +119,11 @@ class ViewsNaturalSortService {
   public function getSupportedEntityProperties() {
     static $supported_properties = [];
     if (empty($supported_properties)) {
+      var_dump($this->entityFieldManager->getFieldMap()['node']);
       foreach ($this->entityFieldManager->getFieldMap() as $entity_type => $info) {
         foreach ($info as $field_name => $field_info) {
-          if ($field_info['type'] == 'string') {
-            $fieldConfigs = $this->entityFieldManager->getBaseFieldDefinitions($entity_type, reset($field_info['bundles']));
+          if ($field_info['type'] == 'string' || $field_info['type'] == 'string_long') {
+            $fieldConfigs = $this->entityFieldManager->getFieldDefinitions($entity_type, reset($field_info['bundles']));
             $fieldConfig = $fieldConfigs[$field_name];
             if (empty($supported_properties[$entity_type])) {
               $supported_properties[$entity_type] = [];
@@ -138,14 +141,6 @@ class ViewsNaturalSortService {
 
         }
       }
-      /*$supported_properties = [
-        'node' => [
-          'title' => [
-            'base_table' => 'node_field_data',
-            'schema_field' => 'title',
-          ],
-        ],
-      ];*/
     }
     return $supported_properties;
   }
@@ -239,40 +234,60 @@ class ViewsNaturalSortService {
 
   /**
    * @see EntityViewsData::getViewsData()
+   * @see views_fielf_default_views_data()
+   * 
+   * @todo make this work for revisions as well. Probably secondary function and added to supported properties format and taken care of somehow in hook_views_data_alter.
    */
   public function getViewsBaseTable($fieldDefinition) {
     $entityType = $this->entityTypeManager->getDefinition($fieldDefinition->getTargetEntityTypeId());
-    $base_table = $entityType->getBaseTable() ?: $entityType->id();
-    $views_revision_base_table = NULL;
-    $revisionable = $entityType->isRevisionable();
-    $base_field = $entityType->getKey('id');
+    if ($fieldDefinition instanceof \Drupal\field\Entity\FieldConfig) {
+      $field_storage = $fieldDefinition->getFieldStorageDefinition();
+      // Check the field type is available.
+      if (!$this->fieldTypeManager->hasDefinition($field_storage->getType())) {
+        return FALSE;
+      }
+      // Check the field storage has fields.
+      if (!$field_storage->getBundles()) {
+        return FALSE;
+      }
 
-    $revision_table = '';
-    if ($revisionable) {
-      $revision_table = $entityType->getRevisionTable() ?: $entityType->id() . '_revision';
-    }
+      // Ignore custom storage too.
+      if ($field_storage->hasCustomStorage()) {
+        return FALSE;
+      }
 
-    $translatable = $entityType->isTranslatable();
-    $data_table = '';
-    if ($translatable) {
-      $data_table = $entityType->getDataTable() ?: $entityType->id() . '_field_data';
-    }
+      // Check whether the entity type storage is supported.
+      $storage = _views_field_get_entity_type_storage($field_storage);
+      if (!$storage) {
+        return FALSE;
+      }
+      if (!$base_table = $entityType->getBaseTable()) {
+        return FALSE;
+      }
 
-    // Some entity types do not have a revision data table defined, but still
-    // have a revision table name set in
-    // \Drupal\Core\Entity\Sql\SqlContentEntityStorage::initTableLayout() so we
-    // apply the same kind of logic.
-    $revision_data_table = '';
-    if ($revisionable && $translatable) {
-      $revision_data_table = $entityType->getRevisionDataTable() ?: $entityType->id() . '_field_revision';
+      $field_name = $field_storage->getName();
+      $entity_type_id = $field_storage->getTargetEntityTypeId();
+      $views_base_table = "{$entity_type_id}__{$field_name}";
     }
-    $revision_field = $entityType->getKey('revision');
+    else {
+      $entityType = $this->entityTypeManager->getDefinition($fieldDefinition->getTargetEntityTypeId());
+      $base_table = $entityType->getBaseTable() ?: $entityType->id();
+      $views_revision_base_table = NULL;
+      $revisionable = $entityType->isRevisionable();
+      $base_field = $entityType->getKey('id');
 
-    $views_base_table = $base_table;
-    if ($data_table) {
-      $views_base_table = $data_table;
+      $translatable = $entityType->isTranslatable();
+      $data_table = '';
+      if ($translatable) {
+        $data_table = $entityType->getDataTable() ?: $entityType->id() . '_field_data';
+      }
+
+      $views_base_table = $base_table;
+      if ($data_table) {
+        $views_base_table = $data_table;
+      }
+      //TODO Add support for finding Fields API Fields base tables. See views.views.inc.
     }
-    //TODO Add support for finding Fields API Fields base tables. See views.views.inc.
     return $views_base_table;
   }
 

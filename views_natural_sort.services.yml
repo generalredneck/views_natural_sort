@@ -15,3 +15,4 @@ services:
       - '@plugin.manager.queue_worker'
       - '@entity_field.manager'
       - '@entity_type.manager'
+      - '@plugin.manager.field.field_type'
