@@ -146,6 +146,20 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
     );
   }
 
+  public function testStoringLongUnicode() {
+    $node = $this->drupalCreateNode(array(
+      'type' => 'views_natural_sort_test_content',
+      'title' => str_repeat('⌘', 255),
+    ));
+    $content = db_select('views_natural_sort', 'vns')
+      ->fields('vns', array('content'))
+      ->condition('vns.eid', $node->nid)
+      ->condition('vns.entity_type', 'node')
+      ->execute()
+      ->fetchField();
+    $this->assertEqual($content, str_repeat('⌘', 255));
+  }
+
 }
 /**
  * Tests all the "Days of the week" natural sort functionality.
