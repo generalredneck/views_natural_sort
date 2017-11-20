@@ -124,13 +124,17 @@ function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()
     $entry_types = module_invoke_all('views_natural_sort_get_entry_types');
   }
 
+  $operations = array();
   foreach ($entry_types as $entry_type) {
-    // Queue up all the data that needs to be rebuilt.
-    module_invoke_all('views_natural_sort_queue_rebuild_data', $entry_type);
+    // Build the batch Operation list.
+    $operations[] = array(
+      'views_natural_sort_rebuild_index',
+      array($entry_type),
+    );
   }
   // Run the queue.
   $batch = array(
-    'operations' => array(array('views_natural_sort_rebuild_index', array())),
+    'operations' => $operations,
     'title' => t('Rebuilding Views Natural Sort Indexing Entries'),
     'finished' => 'views_natural_sort_rebuild_index_finished',
     'file' => drupal_get_path('module', 'views_natural_sort') . '/views_natural_sort.admin.inc',
@@ -142,23 +146,29 @@ function views_natural_sort_rebuild_index_batch_set(array $entry_types = array()
 /**
  * Batch API callback for rebuild_index.
  */
-function views_natural_sort_rebuild_index(&$context) {
-  $queue = views_natural_sort_get_queue();
+function views_natural_sort_rebuild_index($entry_type, &$context) {
   // Alias sandbox for easier referencing.
   $sandbox = &$context['sandbox'];
   // Alias results for easier referencing.
   $results = &$context['results'];
   if (empty($sandbox)) {
     $sandbox['current'] = 0;
-    $sandbox['max'] = $queue->numberOfItems();
+    // Getting just the count is ok, because theoretically, any items added in
+    // the process of things getting reindexed would already have entries.
+    $sandbox['max'] = module_invoke($entry_type['module'], 'views_natural_sort_queue_rebuild_data_count', $entry_type);
     $sandbox['items_per_batch'] = variable_get('views_natural_sort_rebuild_items_per_batch', '500');
   }
-  for ($i = 0; $i < $sandbox['items_per_batch'] && $sandbox['current'] < $sandbox['max']; $i++) {
-    $item = $queue->claimItem(10);
-    if ($item) {
-      views_natural_sort_process_index_queue($item->data);
-      $queue->deleteItem($item);
-    }
+  $items = module_invoke($entry_type['module'], 'views_natural_sort_queue_rebuild_data', $entry_type, $sandbox['current'], $sandbox['items_per_batch']);
+  for ($i = 0; $i < count($items) && $sandbox['current'] < $sandbox['max']; $i++) {
+    views_natural_sort_store($items[$i]);
+    $context['message'] = t(
+      'Now processing @count of @max @entry_type items.',
+      array(
+        '@max' => $sandbox['max'],
+        '@count' => $sandbox['current'],
+        '@entry_type' => $entry_type['entity_type'] . ':' . $entry_type['field']
+      )
+    );
     $sandbox['current']++;
   }
   $results['entries'] = $sandbox['current'];

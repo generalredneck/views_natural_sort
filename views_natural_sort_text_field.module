@@ -86,6 +86,7 @@ function views_natural_sort_text_field_get_entry_types_from_field($field) {
     $entry_types[] = array(
       'entity_type' => $entity_type,
       'field' => $field['field_name'],
+      'module' => 'views_natural_sort_text_field',
     );
   }
   return $entry_types;
@@ -94,11 +95,10 @@ function views_natural_sort_text_field_get_entry_types_from_field($field) {
 /**
  * Implements hook_views_natural_sort_queue_rebuild_data().
  */
-function views_natural_sort_text_field_views_natural_sort_queue_rebuild_data($entry_type) {
+function views_natural_sort_text_field_views_natural_sort_queue_rebuild_data($entry_type, $offset = 0, $limit = NULL) {
   if (!in_array($entry_type, views_natural_sort_text_field_views_natural_sort_get_entry_types())) {
     return array();
   }
-  $queue = views_natural_sort_get_queue();
   $field = field_info_field($entry_type['field']);
   $data = array();
   $bundles = array();
@@ -109,22 +109,52 @@ function views_natural_sort_text_field_views_natural_sort_queue_rebuild_data($en
     }
   }
   $entity_info = entity_get_info($entry_type['entity_type']);
-  $entity_ids = db_select($entity_info['base table'], 'e')
+  // Get rows for each field value so we can accurately use count functionality
+  // on this query. Not putting a distinct here because it would throw off the
+  // calculation. Ordering by entity id because newer ones should have entries
+  // built as they are entered.
+  $query = db_select($entity_info['base table'], 'e')
     ->fields('e', array($entity_info['entity keys']['id']))
     ->condition('e.' . $entity_info['bundle keys']['bundle'], $bundles, 'IN')
-    ->execute()
+    ->orderBy('e.' . $entity_info['entity keys']['id']);
+  $query->join('field_data_' . $entry_type['field'], 'f', 'f.entity_type = :entity_type AND f.deleted = 0 AND f.entity_id = e.' . $entity_info['entity keys']['id'], array('entity_type' => $entry_type['entity_type']));
+  if ($limit) {
+    $query->range($offset, $limit);
+  }
+  $entity_ids = $query->execute()
     ->fetchCol();
-
+  array_unique($entity_ids);
   if (!empty($entity_ids)) {
     foreach ($entity_ids as $entity_id) {
       $results = entity_load($entry_type['entity_type'], array($entity_id), array(), TRUE);
       $entity = reset($results);
       $entries = _views_natural_sort_text_field_to_vns($entry_type['entity_type'], $entity, $field);
-      foreach ($entries as $entry) {
-        $queue->createItem($entry);
-      }
+      $data = array_merge($data, $entries);
     }
   }
+  return $data;
+}
+
+function views_natural_sort_text_field_views_natural_sort_queue_rebuild_data_count($entry_type) {
+  if (!in_array($entry_type, views_natural_sort_text_field_views_natural_sort_get_entry_types())) {
+    return array();
+  }
+  $field = field_info_field($entry_type['field']);
+  $data = array();
+  $bundles = array();
+
+  if (isset($field['bundles'][$entry_type['entity_type']])) {
+    foreach ($field['bundles'][$entry_type['entity_type']] as $key => $bundle) {
+      $bundles[] = $bundle;
+    }
+  }
+  $entity_info = entity_get_info($entry_type['entity_type']);
+  $query = db_select($entity_info['base table'], 'e')
+    ->fields('e', array($entity_info['entity keys']['id']))
+    ->condition('e.' . $entity_info['bundle keys']['bundle'], $bundles, 'IN');
+  $query->join('field_data_' . $entry_type['field'], 'f', 'f.entity_type = :entity_type AND f.deleted = 0 AND f.entity_id = e.' . $entity_info['entity keys']['id'], array('entity_type' => $entry_type['entity_type']));
+  return $query->execute()
+    ->rowCount();
 }
 
 /**

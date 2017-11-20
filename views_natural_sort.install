@@ -175,5 +175,13 @@ function views_natural_sort_update_7201() {
     }
   }
   cache_clear_all();
-  return t('If you implement your views using Features, be sure to update the Featues that contain View Natural Sort Views immediatly after this upgrade and before the next revert.');
+  return t('If you implement your views using Features, be sure to update the Features that contain View Natural Sort Views immediately after this upgrade and before the next revert.');
+}
+
+/**
+ * Removing the queue because queuing didn't work out.
+ */
+
+function views_natural_sort_update_7202() {
+  DrupalQueue::get('views_natural_sort_index_queue')->deleteQueue();
 }
