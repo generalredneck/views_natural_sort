@@ -42,7 +42,7 @@ class views_natural_sort_handler_sort extends views_handler_sort {
     }
 
     // If someone has submitted the exposed form, lets grab it here.
-    if ($this->options['exposed'] && $this->view->exposed_data['sort_order']) {
+    if ($this->options['exposed'] && isset($this->view->exposed_data['sort_order'])) {
       $temporder = $this->view->exposed_data['sort_order'];
     }
     // If we are using this like a normal sort, our info will be here.
