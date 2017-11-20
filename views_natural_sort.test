@@ -91,6 +91,7 @@ class ViewsNaturalSortBasicTest extends ViewsTestCase {
    * Test Unicode symbol removal in sorting.
    */
   public function testNaturalSortUnicodeSymbols() {
+    module_load_include('inc', 'views_natural_sort', 'views_natural_sort');
     $symbols = variable_set('views_natural_sort_symbols_remove', "#…\",'\\()[]«?!»¡¿");
     $titles = array(
       'Cuando… se abre, ¿dará algún tipo de señal?',
@@ -174,6 +175,7 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
    * Test tranformation functionality of the days of the week transformation.
    */
   public function testDefaultDayReplace() {
+    module_load_include('inc', 'views_natural_sort', 'views_natural_sort');
     foreach (views_natural_sort_days_of_the_week_get_default_days() as $replaced => $day) {
       $this->assertEqual(views_natural_sort_days_of_the_week_sort_days($day), $replaced);
     }
@@ -184,6 +186,7 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
    */
   public function testFirstDayMonday() {
     variable_set("views_natural_sort_days_of_the_week_first_day_en", "Monday");
+    module_load_include('inc', 'views_natural_sort', 'views_natural_sort');
     $expected = array(
       "Monday",
       "Tuesday",
@@ -202,6 +205,7 @@ class ViewsNaturalSortDaysOfTheWeekTest extends DrupalWebTestCase {
    * Test sorting day abbreviations.
    */
   public function testAbbreviations() {
+    module_load_include('inc', 'views_natural_sort', 'views_natural_sort');
     $expected = array(
       "Sun",
       "Mon.",

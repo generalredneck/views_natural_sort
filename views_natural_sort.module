@@ -63,6 +63,32 @@ function views_natural_sort_module_implements_alter(&$implements, $hook) {
 }
 
 /**
+ * Returns all the entry types used by VNS.
+ *
+ * @return array
+ *   Array of arrays defining fields and entities to index.
+ *     Keyed for easy search like 'node|title' ('entity|field').
+ *     array(
+ *       array(
+ *         'entity_type' - string Ex. node
+ *         'field ' - string Field name. Lines up with property or field.
+ *       ),
+ *     )
+ */
+function views_natural_sort_get_entry_types() {
+  $entry_types = &drupal_static(__FUNCTION__, array());
+  if (empty($entry_types)) {
+    $data = module_invoke_all('views_natural_sort_get_entry_types');
+    drupal_alter('views_natural_sort_get_entry_types', $data);
+    // Rekey so we can do a search more easily for entry types.
+    foreach ($data as $entry_type) {
+      $entry_types[$entry_type['entity_type'] . '|' . $entry_type['field']] = $entry_type;
+    }
+  }
+  return $entry_types;
+}
+
+/**
  * Implements hook_views_natural_sort_get_entry_types().
  */
 function views_natural_sort_views_natural_sort_get_entry_types() {
@@ -83,9 +109,8 @@ function views_natural_sort_views_natural_sort_get_entry_types() {
  * Implements hook_views_natural_sort_queue_rebuild_data().
  */
 function views_natural_sort_views_natural_sort_queue_rebuild_data($entry_type) {
-  $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
-  if (empty($supported_entity_properties[$entry_type['entity_type']]) ||
-    empty($supported_entity_properties[$entry_type['entity_type']][$entry_type['field']])) {
+  $supported_entity_types = views_natural_sort_get_entry_types();
+  if (empty($supported_entity_properties[$entry_type['entity_type'] . '|' . $entry_type['field']])) {
     return array();
   }
   $queue = views_natural_sort_get_queue();
@@ -119,14 +144,10 @@ function views_natural_sort_views_natural_sort_queue_rebuild_data($entry_type) {
  * This keeps our natural sort index up to date.
  */
 function views_natural_sort_entity_insert($entity, $type) {
-  $supported_entity_properties = views_natural_sort_get_views_configurable_properties();
-  if (empty($supported_entity_properties[$type])) {
-    return;
-  }
-  foreach ($supported_entity_properties[$type] as $property => $property_info) {
-    // Proposed by hgoto in #2672538. Made it in before he got credit.
-    if (isset($entity->{$property})) {
-      views_natural_sort_store(views_natural_sort_entity_to_vns($entity, $type, $property));
+  $supported_entity_types = views_natural_sort_get_entry_types();
+  foreach ($supported_entity_types as $key => $entry_type) {
+    if ($entry_type['entity_type'] == $type && isset($entity->{$entry_type['field']})) {
+      views_natural_sort_store(views_natural_sort_entity_to_vns($entity, $type, $entry_type['field']));
     }
   }
 }

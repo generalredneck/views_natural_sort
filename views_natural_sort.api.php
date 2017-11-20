@@ -6,17 +6,14 @@
  */
 
 /**
- * Information used by the index rebuilding engine.
- *
- * This information is passed to each module during re-index so that modules can
- * determine whether it needs to return items or not.
+ * Information that tells VNS about entities and properties to index.
  *
  * @return array
- *   Array of arrays defining fields and entities to reindex
+ *   Array of arrays defining fields and entities to index
  *     array(
  *       array(
  *         'entity_type' - string Ex. node
- *         'field ' - string Field name to indicate during re-index
+ *         'field ' - string Field name. Lines up with property or field.
  *       ),
  *     )
  */
@@ -30,9 +27,30 @@ function hook_views_natural_sort_get_entry_types() {
 }
 
 /**
+ * Used to alter entry types added by other modules.
+ *
+ * @param array $entry_types
+ *   Array of arrays defining fields and entities to index
+ *     array(
+ *       array(
+ *         'entity_type' - string Ex. node
+ *         'field ' - string Field name. Lines up with property or field.
+ *       ),
+ *     )
+ */
+function hook_views_natural_sort_get_entry_types_alter(array &$entry_types) {
+  foreach ($entry_types as $key => $entry_type) {
+    // We never naturally sort users, so lets nix em.
+    if ($entry_type == 'user') {
+      unset($entry_types[$key]);
+    }
+  }
+}
+
+/**
  * Used for a custom module to queue data that needs to be re-indexed.
  *
- * This is typicall used when the module is installed or settings are changed.
+ * This is typically used when the module is installed or settings are changed.
  *
  * @param array $entry_type
  *   Array representing an entry type with an entity_type field pair.
@@ -103,14 +121,4 @@ function hook_views_natural_sort_transformations_alter(array &$transformations, 
  */
 function _my_special_transformation_function($string) {
   return str_replace('a', '', $string);
-}
-
-/**
- * This hook has been deprecated and is no longer called.
- *
- * @deprecated
- *
- * @see hook_views_natural_sort_queue_rebuild_data
- */
-function hook_views_natural_sort_queue_rebuild_data($entry_type) {
 }
