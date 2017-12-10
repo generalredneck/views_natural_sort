@@ -119,7 +119,6 @@ class ViewsNaturalSortService {
   public function getSupportedEntityProperties() {
     static $supported_properties = [];
     if (empty($supported_properties)) {
-      var_dump($this->entityFieldManager->getFieldMap()['node']);
       foreach ($this->entityFieldManager->getFieldMap() as $entity_type => $info) {
         foreach ($info as $field_name => $field_info) {
           if ($field_info['type'] == 'string' || $field_info['type'] == 'string_long') {
@@ -156,11 +155,15 @@ class ViewsNaturalSortService {
       }
       foreach ($supported_entity_properties as $entity => $properties) {
         foreach ($properties as $property => $schema_info) {
-          if (!empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]) &&
-            !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']) &&
-            !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['id']) &&
-            $views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['id'] == 'natural') {
-            $views_supported_properties[$entity][$property] = $schema_info;
+          if (!empty($views_data[$schema_info['base_table']][$schema_info['schema_field']])) {
+            if (isset($views_data[$schema_info['base_table']][$schema_info['schema_field']]['field']['real field'])) {
+              $schema_info['schema_field'] = $views_data[$schema_info['base_table']][$schema_info['schema_field']]['field']['real field'];
+            }
+            if (!empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']) &&
+              !empty($views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['id']) &&
+              $views_data[$schema_info['base_table']][$schema_info['schema_field']]['sort']['id'] == 'natural') {
+              $views_supported_properties[$entity][$property] = $schema_info;
+            }
           }
         }
       }
@@ -235,7 +238,7 @@ class ViewsNaturalSortService {
   /**
    * @see EntityViewsData::getViewsData()
    * @see views_fielf_default_views_data()
-   * 
+   *
    * @todo make this work for revisions as well. Probably secondary function and added to supported properties format and taken care of somehow in hook_views_data_alter.
    */
   public function getViewsBaseTable($fieldDefinition) {
@@ -257,6 +260,8 @@ class ViewsNaturalSortService {
       }
 
       // Check whether the entity type storage is supported.
+      // Change this to a required service.
+      include_once \Drupal::service('module_handler')->getModule('views')->getPath(). '/views.views.inc';
       $storage = _views_field_get_entity_type_storage($field_storage);
       if (!$storage) {
         return FALSE;
@@ -292,3 +297,6 @@ class ViewsNaturalSortService {
   }
 
 }
+
+
+//SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '= vns_node__field_vns_sort_text.eid AND (vns_node__field_vns_sort_text.entity_ty' at line 3: SELECT vns_node_field_data.content AS vns_node_field_data_content, vns_node__field_vns_sort_text.content AS vns_node__field_vns_sort_text_content, node_field_data.nid AS nid FROM {node_field_data} node_field_data LEFT JOIN {views_natural_sort} vns_node_field_data ON node_field_data.nid = vns_node_field_data.eid AND (vns_node_field_data.entity_type = :views_join_condition_0 AND vns_node_field_data.field = :views_join_condition_1) LEFT JOIN {node__field_vns_sort_text} node__field_vns_sort_text ON node_field_data.nid = node__field_vns_sort_text.entity_id AND (node__field_vns_sort_text.deleted = :views_join_condition_2 AND node__field_vns_sort_text.langcode = node_field_data.langcode) LEFT JOIN {views_natural_sort} vns_node__field_vns_sort_text ON node__field_vns_sort_text. = vns_node__field_vns_sort_text.eid AND (vns_node__field_vns_sort_text.entity_type = :views_join_condition_4 AND vns_node__field_vns_sort_text.field = :views_join_condition_5) WHERE node_field_data.type IN (:db_condition_placeholder_6) ORDER BY vns_node_field_data_content ASC, vns_node__field_vns_sort_text_content ASC; Array ( [:db_condition_placeholder_6] => views_natural_sort_test_content [:views_join_condition_0] => node [:views_join_condition_1] => title [:views_join_condition_2] => 0 [:views_join_condition_4] => [:views_join_condition_5] => field_vns_sort_text_value )
