@@ -180,7 +180,7 @@ class BasicTest extends ViewsKernelTestBase {
       'title' => '-3.5501 apples',
     ]);
     $node8->save();
-    $node9 = Node::create([
+    $node9 = node::create([
       'type' => 'views_natural_sort_test_content',
       'title' => '3.5501 apples',
     ]);
@@ -268,4 +268,18 @@ class BasicTest extends ViewsKernelTestBase {
     $this->assertEqual($properties, $expected_result);
   }
 
+  public function testStoringLongUnicode() {
+    $node = node::create([
+      'type' => 'views_natural_sort_test_content',
+      'title' => str_repeat('⌘', 255),
+    ]);
+    $node->save();
+    $content = db_select('views_natural_sort', 'vns')
+      ->fields('vns', ['content'])
+      ->condition('vns.eid', $node->id())
+      ->condition('vns.entity_type', 'node')
+      ->execute()
+      ->fetchField();
+    $this->assertEqual($content, str_repeat('⌘', 255));
+  }
 }
