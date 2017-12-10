@@ -64,7 +64,7 @@ class IndexRecord {
     foreach ($this->transformations as $transformation) {
       $transformed_content = $transformation->transform($transformed_content);
     }
-    return substr($transformed_content, 0, 255);
+    return mb_substr($transformed_content, 0, 255);
   }
   private function generateType() {
     $this->type = new IndexRecordType($this->entityType, $this->field);
