@@ -14,6 +14,7 @@ use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueWorkerManagerInterface;
 use Drupal\views\ViewsData;
 use Drupal\views_natural_sort\Plugin\IndexRecordContentTransformationManager as TransformationManager;
+use Drupal\views_natural_sort\Plugin\IndexRecordSourcePluginManager as EntrySourcePluginManager;
 
 /**
  * Service that manages Views Natural Sort records.
@@ -23,7 +24,7 @@ class ViewsNaturalSortService {
   /**
    * Constructor.
    */
-  public function __construct(TransformationManager $transformationManager, ConfigFactory $configFactory, ModuleHandlerInterface $moduleHandler, LoggerChannelFactory $loggerFactory, Connection $database, ViewsData $viewsData, QueueFactory $queue, QueueWorkerManagerInterface $queueManager, EntityFieldManagerInterface $entityFieldManager, EntityTypeManagerInterface $entityTypeManager, FieldTypePluginManager $fieldTypeManager) {
+  public function __construct(TransformationManager $transformationManager, ConfigFactory $configFactory, ModuleHandlerInterface $moduleHandler, LoggerChannelFactory $loggerFactory, Connection $database, ViewsData $viewsData, QueueFactory $queue, QueueWorkerManagerInterface $queueManager, EntityFieldManagerInterface $entityFieldManager, EntityTypeManagerInterface $entityTypeManager, FieldTypePluginManager $fieldTypeManager, EntrySourcePluginManager $entry_source_plugin_manager) {
     $this->configFactory = $configFactory;
     $this->moduleHandler = $moduleHandler;
     $this->loggerFactory = $loggerFactory->get('views_natural_sort');
@@ -35,6 +36,7 @@ class ViewsNaturalSortService {
     $this->entityFieldManager = $entityFieldManager;
     $this->entityTypeManager = $entityTypeManager;
     $this->fieldTypeManager = $fieldTypeManager;
+    $this->entrySourcePluginManager = $entry_source_plugin_manager;
   }
 
   /**
@@ -68,6 +70,21 @@ class ViewsNaturalSortService {
       }
     }
     return $transformations;
+  }
+
+  public function getEntryTypes() {
+    static $entry_types = [];
+    if (empty($entry_types)) {
+      $entry_sources = $this->entrySourcePluginManager->getDefinitions();
+      foreach ($entry_sources as $plugin_id => $definition) {
+        $entry_source_plugin = $this->entrySourcePluginManager->createInstance($plugin_id);
+        foreach ($entry_source_plugin->getEntryTypes() as $entry_type) {
+          $entry_types[$entry_type->getEntityType() . '|' . $entry_type->getField()] = $entry_type;
+        }
+      }
+      $this->moduleHandler->alter('views_natural_sort_get_entry_types', $entry_types);
+    }
+    return $entry_types;
   }
 
   /**
@@ -116,33 +133,6 @@ class ViewsNaturalSortService {
    *     ]
    *   )
    */
-  public function getSupportedEntityProperties() {
-    static $supported_properties = [];
-    if (empty($supported_properties)) {
-      foreach ($this->entityFieldManager->getFieldMap() as $entity_type => $info) {
-        foreach ($info as $field_name => $field_info) {
-          if ($field_info['type'] == 'string' || $field_info['type'] == 'string_long') {
-            $fieldConfigs = $this->entityFieldManager->getFieldDefinitions($entity_type, reset($field_info['bundles']));
-            $fieldConfig = $fieldConfigs[$field_name];
-            if (empty($supported_properties[$entity_type])) {
-              $supported_properties[$entity_type] = [];
-            }
-            $base_table = $this->getViewsBaseTable($fieldConfig);
-            if (empty($base_table)) {
-              continue;
-            }
-            $supported_properties[$entity_type][$field_name] = [
-              'base_table' => $base_table,
-              // This may not be techincally correct. Research Further.
-              'schema_field' => $field_name,
-            ];
-          }
-
-        }
-      }
-    }
-    return $supported_properties;
-  }
 
   public function getViewsSupportedEntityProperties() {
     static $views_supported_properties = [];
@@ -235,66 +225,6 @@ class ViewsNaturalSortService {
     return $record;
   }
 
-  /**
-   * @see EntityViewsData::getViewsData()
-   * @see views_fielf_default_views_data()
-   *
-   * @todo make this work for revisions as well. Probably secondary function and added to supported properties format and taken care of somehow in hook_views_data_alter.
-   */
-  public function getViewsBaseTable($fieldDefinition) {
-    $entityType = $this->entityTypeManager->getDefinition($fieldDefinition->getTargetEntityTypeId());
-    if ($fieldDefinition instanceof \Drupal\field\Entity\FieldConfig) {
-      $field_storage = $fieldDefinition->getFieldStorageDefinition();
-      // Check the field type is available.
-      if (!$this->fieldTypeManager->hasDefinition($field_storage->getType())) {
-        return FALSE;
-      }
-      // Check the field storage has fields.
-      if (!$field_storage->getBundles()) {
-        return FALSE;
-      }
-
-      // Ignore custom storage too.
-      if ($field_storage->hasCustomStorage()) {
-        return FALSE;
-      }
-
-      // Check whether the entity type storage is supported.
-      // Change this to a required service.
-      include_once \Drupal::service('module_handler')->getModule('views')->getPath(). '/views.views.inc';
-      $storage = _views_field_get_entity_type_storage($field_storage);
-      if (!$storage) {
-        return FALSE;
-      }
-      if (!$base_table = $entityType->getBaseTable()) {
-        return FALSE;
-      }
-
-      $field_name = $field_storage->getName();
-      $entity_type_id = $field_storage->getTargetEntityTypeId();
-      $views_base_table = "{$entity_type_id}__{$field_name}";
-    }
-    else {
-      $entityType = $this->entityTypeManager->getDefinition($fieldDefinition->getTargetEntityTypeId());
-      $base_table = $entityType->getBaseTable() ?: $entityType->id();
-      $views_revision_base_table = NULL;
-      $revisionable = $entityType->isRevisionable();
-      $base_field = $entityType->getKey('id');
-
-      $translatable = $entityType->isTranslatable();
-      $data_table = '';
-      if ($translatable) {
-        $data_table = $entityType->getDataTable() ?: $entityType->id() . '_field_data';
-      }
-
-      $views_base_table = $base_table;
-      if ($data_table) {
-        $views_base_table = $data_table;
-      }
-      //TODO Add support for finding Fields API Fields base tables. See views.views.inc.
-    }
-    return $views_base_table;
-  }
 
 }
 

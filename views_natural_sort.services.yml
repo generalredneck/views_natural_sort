@@ -2,6 +2,9 @@ services:
   plugin.manager.vns_transformation:
     class: Drupal\views_natural_sort\Plugin\IndexRecordContentTransformationManager
     parent: default_plugin_manager
+  plugin.manager.vns_entry_source_plugin:
+    class: Drupal\views_natural_sort\Plugin\IndexRecordSourcePluginManager
+    parent: default_plugin_manager
   views_natural_sort.service:
     class: Drupal\views_natural_sort\ViewsNaturalSortService
     arguments:
@@ -16,3 +19,4 @@ services:
       - '@entity_field.manager'
       - '@entity_type.manager'
       - '@plugin.manager.field.field_type'
+      - '@plugin.manager.vns_entry_source_plugin'

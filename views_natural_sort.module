@@ -43,13 +43,16 @@ function views_natural_sort_module_implements_alter(&$implements, $hook) {
  */
 function views_natural_sort_views_natural_sort_get_entry_types() {
   $service = Drupal::service('views_natural_sort.service');
+  /*
   $supported_entity_properties = $service->getViewsSupportedEntityProperties();
   $entry_types = [];
   foreach ($supported_entity_properties as $entity_type => $properties) {
     foreach ($properties as $property => $schema_info) {
       $entry_types = new IndexRecordType($entity_type, $property);
     }
-  }
+  }*/
+  $service->getEntryTypes();
+
   return $entry_types;
 }
 
