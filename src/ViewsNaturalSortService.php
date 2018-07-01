@@ -3,12 +3,9 @@
 namespace Drupal\views_natural_sort;
 
 use Drupal\Core\Config\ConfigFactory;
-<<<<<<< HEAD
 use Drupal\Core\Database\Connection;
-=======
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
->>>>>>> 8.x-2.x
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -29,11 +26,7 @@ class ViewsNaturalSortService {
   /**
    * Constructor.
    */
-<<<<<<< HEAD
-  public function __construct(TransformationManager $transformationManager, ConfigFactory $configFactory, ModuleHandlerInterface $moduleHandler, LoggerChannelFactory $loggerFactory, Connection $database, ViewsData $viewsData, QueueFactory $queue, QueueWorkerManagerInterface $queueManager, EntityFieldManagerInterface $entityFieldManager, EntityTypeManagerInterface $entityTypeManager, FieldTypePluginManager $fieldTypeManager, EntrySourcePluginManager $entry_source_plugin_manager) {
-=======
   public function __construct(TransformationManager $transformationManager, ConfigFactory $configFactory, ModuleHandlerInterface $moduleHandler, LoggerChannelFactoryInterface $loggerFactory, Connection $database, ViewsData $viewsData, QueueFactory $queue, QueueWorkerManagerInterface $queueManager, EntityFieldManagerInterface $entityFieldManager, EntityTypeManagerInterface $entityTypeManager) {
->>>>>>> 8.x-2.x
     $this->configFactory = $configFactory;
     $this->moduleHandler = $moduleHandler;
     $this->loggerFactory = $loggerFactory->get('views_natural_sort');
