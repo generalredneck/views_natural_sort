@@ -4,14 +4,12 @@ namespace Drupal\views_natural_sort;
 
 use Drupal\Core\Config\ConfigFactory;
 use Drupal\Core\Database\Connection;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Entity\EntityInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldTypePluginManager;
 use Drupal\Core\Logger\LoggerChannelFactory;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueWorkerManagerInterface;
 use Drupal\views\ViewsData;
@@ -26,7 +24,17 @@ class ViewsNaturalSortService {
   /**
    * Constructor.
    */
-  public function __construct(TransformationManager $transformationManager, ConfigFactory $configFactory, ModuleHandlerInterface $moduleHandler, LoggerChannelFactoryInterface $loggerFactory, Connection $database, ViewsData $viewsData, QueueFactory $queue, QueueWorkerManagerInterface $queueManager, EntityFieldManagerInterface $entityFieldManager, EntityTypeManagerInterface $entityTypeManager) {
+  public function __construct(
+    TransformationManager $transformationManager,
+    EntrySourcePluginManager $entry_source_plugin_manager,
+    ConfigFactory $configFactory,
+    ModuleHandlerInterface $moduleHandler,
+    LoggerChannelFactoryInterface $loggerFactory,
+    Connection $database,
+    ViewsData $viewsData,
+    QueueFactory $queue,
+    QueueWorkerManagerInterface $queueManager
+    ) {
     $this->configFactory = $configFactory;
     $this->moduleHandler = $moduleHandler;
     $this->loggerFactory = $loggerFactory->get('views_natural_sort');
@@ -35,9 +43,6 @@ class ViewsNaturalSortService {
     $this->viewsData = $viewsData;
     $this->queue = $queue;
     $this->queueManager = $queueManager;
-    $this->entityFieldManager = $entityFieldManager;
-    $this->entityTypeManager = $entityTypeManager;
-    $this->fieldTypeManager = $fieldTypeManager;
     $this->entrySourcePluginManager = $entry_source_plugin_manager;
   }
 
@@ -163,6 +168,17 @@ class ViewsNaturalSortService {
     return $views_supported_properties;
   }
 
+  public function getSupportedEntityProperties() {
+    // Load entrySourcePlugins here.
+    $supported_entity_properties = [];
+    foreach ($this->getEntryTypes() as $entry_type) {
+      array_merge($supported_entity_properties, $entry_type->getSupportedEntityProperties());
+    }
+    return $supported_entity_properties;
+
+    //$info = $this->entityTypeBundleInfo->getAllBundleInfo();
+    //$this->entityFieldManager->getFieldDefinitions('node',)
+  }
   public function storeIndexRecordsFromEntity(EntityInterface $entity) {
     // TODO: Consider abstracting this out. The creation and storage of records
     // should be handled by a converter class that interacts with specific

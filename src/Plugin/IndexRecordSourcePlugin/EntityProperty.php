@@ -2,6 +2,8 @@
 
 namespace Drupal\views_natural_sort\Plugin\IndexRecordSourcePlugin;
 
+use Drupal\Core\Entity\EntityFieldManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\views_natural_sort\Plugin\IndexRecordSourcePluginBase as EntrySourcePlugin;
 use Drupal\views\ViewsData;
 use Drupal\views_natural_sort\IndexRecordType as EntryType;
@@ -22,12 +24,23 @@ class EntityProperty extends EntrySourcePlugin {
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('views.views_data')
+      $container->get('views.views_data'),
+      $container->get('entity_field.manager'),
+      $container->get('entity_type.manager')
     );
   }
 
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, ViewsData $views_data) {
+  public function __construct(
+    array $configuration,
+    $plugin_id,
+    $plugin_definition,
+    ViewsData $views_data,
+    EntityFieldManagerInterface $entityFieldManager,
+    EntityTypeManagerInterface $entityTypeManager
+    ) {
     $this->viewsData = $views_data;
+    $this->entityFieldManager = $entityFieldManager;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   public function getEntryTypes() {
@@ -35,7 +48,7 @@ class EntityProperty extends EntrySourcePlugin {
     if (empty($types)) {
       foreach ($this->getViewsSupportedEntityProperties() as $entity_type => $properties) {
         foreach ($properties as $property => $schema_info) {
-          $entry_types[] =  new EntryType($entity_type, $property, $this);
+          $entry_types[] = new EntryType($entity_type, $property, $this);
         }
       }
     }
@@ -45,6 +58,7 @@ class EntityProperty extends EntrySourcePlugin {
   public function getSupportedEntityProperties() {
     static $supported_properties = [];
     if (empty($supported_properties)) {
+      //TODO: ERRROR HERE... pull in entityFieldManager.
       foreach ($this->entityFieldManager->getFieldMap() as $entity_type => $info) {
         foreach ($info as $field_name => $field_info) {
           if ($field_info['type'] == 'string' || $field_info['type'] == 'string_long') {
@@ -76,7 +90,7 @@ class EntityProperty extends EntrySourcePlugin {
       $views_data = $this->viewsData->getAll();
 
       if (empty($views_data)) {
-        return FALSE;
+        return [];
       }
       foreach ($supported_entity_properties as $entity => $properties) {
         foreach ($properties as $property => $schema_info) {
@@ -91,7 +105,6 @@ class EntityProperty extends EntrySourcePlugin {
     }
     return $views_supported_properties;
   }
-
 
   /**
    * @see EntityViewsData::getViewsData()

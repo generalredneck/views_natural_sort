@@ -9,6 +9,7 @@ services:
     class: Drupal\views_natural_sort\ViewsNaturalSortService
     arguments:
       - '@plugin.manager.vns_transformation'
+      - '@plugin.manager.vns_entry_source_plugin'
       - '@config.factory'
       - '@module_handler'
       - '@logger.factory'
@@ -16,7 +17,3 @@ services:
       - '@views.views_data'
       - '@queue'
       - '@plugin.manager.queue_worker'
-      - '@entity_field.manager'
-      - '@entity_type.manager'
-      - '@plugin.manager.field.field_type'
-      - '@plugin.manager.vns_entry_source_plugin'
